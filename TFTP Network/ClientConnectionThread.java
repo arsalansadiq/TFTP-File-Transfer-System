@@ -49,10 +49,31 @@ public class ClientConnectionThread implements Runnable {
 			System.arraycopy(receivePacket.getData(), 2, fileName, 0, fileName.length);
 			
 			System.out.println("FileName: " + new String(fileName));
-			
-			
+			String fileNameString = new String (fileName);
+			FileInputStream dataStream = makeInputStream(fileNameString);			
+			byte fileContent[]=new byte[(int) (new File(fileNameString)).length()];
+			try {
+				dataStream.read(fileContent);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				System.out.println("Error writing from data stream to byte array in server");
+				e.printStackTrace();
+			}
+			System.out.println(fileContent);
 		}
 
+	}
+	public FileInputStream makeInputStream(String fileNameString){
+		try { 
+			//M:\3303\TFTP-File-Transfer-System\TFTP Network
+			System.out.println((fileNameString));
+			return new FileInputStream(new File("M:/3303/TFTP-File-Transfer-System/TFTP Network/"+fileNameString)); 			 
+		} catch (FileNotFoundException e) {
+			System.out.println("Error making file input stream. --TERMINATING--"); 
+			e.printStackTrace();
+			System.exit(0);
+			return null; 
+		}
 	}
 
 }
