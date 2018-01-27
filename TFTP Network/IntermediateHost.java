@@ -88,14 +88,17 @@ public class IntermediateHost {
 			System.out.print("Whats being sent: " );
 			System.out.print("\nAs bytes: ");
 			int k1 = sendPacket.getLength() - 1;
-			while (k1 >= 0 && data[k1] == 0) {
-				k1--;
+			for (int k3 = 0; k3<sendPacket.getLength()-1; k3++){
+				System.out.print(sendPacket.getData()[k3]);
 			}
+//			while (k1 >= 0 && data[k1] == 0) {
+//				k1--;
+//			}
 			byte y[] = sendPacket.getData(); 
 			y = Arrays.copyOf(data, k1+1);
-			for (int i= 0; i < y.length ; i++) {
-				System.out.print(y[i]);
-			}
+//			for (int i= 0; i < y.length ; i++) {
+//				System.out.print(y[i]);
+//			}
 			byte fileData[] = new byte[(int)y.length];
 			System.out.print("\nAs String: " + new String(y));
 			System.out.println("\nLength: " + len1 + " bytes");

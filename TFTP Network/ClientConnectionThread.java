@@ -5,11 +5,13 @@ import java.util.Arrays;
 public class ClientConnectionThread implements Runnable {
 	private DatagramPacket receivePacket;
 	private byte data[];
+	private byte msg[];
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
 		// store parameter for later user
 		this.receivePacket = receivePacket;
 		this.data = receivePacket.getData();
+		
 	}
 
 	public void run() {
@@ -40,7 +42,16 @@ public class ClientConnectionThread implements Runnable {
 		System.out.print("\nAs String: " + new String(data));
 		System.out.println("\nLength: " + len + " bytes");
 
-		//--------------------------------------------------------------
+		//-------------------------------------------------------------- decoding of byte array
+		
+		if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 1){
+			byte[] fileName= new byte[receivePacket.getLength()];
+			System.arraycopy(receivePacket.getData(), 2, fileName, 0, fileName.length);
+			
+			System.out.println("FileName: " + new String(fileName));
+			
+			
+		}
 
 	}
 
