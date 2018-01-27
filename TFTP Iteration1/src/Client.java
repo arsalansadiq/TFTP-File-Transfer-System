@@ -1,3 +1,7 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -23,7 +27,42 @@ public class Client extends Thread {
 			System.exit(0);
 		}
 	}
-
+	public FileInputStream OpenIFile(String path){
+		try { 
+			return new FileInputStream(path); 			 
+		} catch (FileNotFoundException e) {
+			System.out.println("Error making file input stream. --TERMINATING--"); 
+			e.printStackTrace();
+			System.exit(0);
+			return null; 
+		}
+	}
+	public FileOutputStream OpenOFile(String dir){
+		File directory = new File(dir);
+		if(!directory.exists()){
+			try { 
+				directory.createNewFile(); 
+			} 
+			catch (IOException e) { 
+				System.out.println("Error creating new file for output stream. -- TERMINATING --");
+				e.printStackTrace();
+				System.exit(0);
+			}
+		}else {
+			System.out.println("directory already exists -- terminating --");//should be changed
+			System.exit(0);
+		}
+		
+		try { 
+			return new FileOutputStream(directory);
+		} catch (FileNotFoundException e) {
+			//The code should just quit if it somehow comes to this.
+			System.out.println("Error making fileoutput stream -- terminating");
+			e.printStackTrace(); 
+			System.exit(0);
+		}
+		return null;
+	}
 	public void createDatagramPacket()  {
 
 		//creation of buffer to be sent/received
