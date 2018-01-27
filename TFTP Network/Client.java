@@ -1,7 +1,10 @@
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -13,16 +16,38 @@ public class Client extends Thread {
 	private DatagramPacket sendPacket;
 	private DatagramPacket receivePacket;
 	byte buffer[]  = new byte [128];
+	private Socket socket;
 
 	public Client() {
+		/*---------------- creating a socket for file sending purposes-----------------*/	
+			try {
+				socket = new Socket(sendReceiveSocket.getInetAddress(),sendReceiveSocket.getLocalPort());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
-		try {
-			sendReceiveSocket = new DatagramSocket(); //creation of a sending and receiving socket
-		} catch (SocketException se) { //throw exception
-			se.printStackTrace();
-			System.exit(0);
+			try {
+				sendReceiveSocket = new DatagramSocket(); //creation of a sending and receiving socket
+			} catch (SocketException se) { //throw exception
+				se.printStackTrace();
+				System.exit(0);
+			}
 		}
-	}
+		
+		
+		
+		
+		
+		
+		public void sendFile(){
+			try {
+				DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+				FileInputStream fis =  new FileInputStream(null)
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 	public void createDatagramPacket()  {
 
