@@ -19,6 +19,7 @@ public class Client {
 	private DatagramPacket receivePacket;
 	private final int hostPort=23;
 	byte buffer[]  = new byte [128];
+	private final static String mode= "ocTET";
 	//private Scanner input;
 
 	public Client() {
@@ -43,7 +44,7 @@ public class Client {
 			readRequest(fileName);	
 		}
 		else if(request.equalsIgnoreCase("w")){
-
+			writeRequest(fileName);
 		}
 
 
@@ -135,6 +136,34 @@ public class Client {
 			System.exit(0);
 		}
 
+	}
+//---------------------------write Request methods-----------------------------------
+	public void writeRequest(String fileName){
+		//if sending a read request, the client has to create a FileOutputStream to a file
+				//which will be holding the data read from the file received by the read request
+				FileOutputStream writingToFile =makeOutputFileStream(fileName);
+				//now must create a datagram packet and send it to the host, (01 for read followed by the filename to be read)
+				sendPacket(createRRDatagramPacket(fileName));
+	}
+	public DatagramPacket createWRDatagramPacket(String accessingFileName) {
+		buffer[0]= 0; 
+		buffer[1] = 2;
+		byte fileAccessName[]=accessingFileName.getBytes();
+		System.arraycopy(fileAccessName, 0, buffer, 2, fileAccessName.length);
+		buffer[2+fileAccessName.length]= 0;
+		byte modeName[]=mode.getBytes();
+		System.arraycopy(modeName, 0, buffer, 3+fileAccessName.length, modeName.length);
+		buffer[3+fileAccessName.length+modeName.length]=0;
+		
+		try {
+			return new DatagramPacket(buffer, buffer.length,InetAddress.getLocalHost(),  hostPort);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error in createRRdatagrampacket terminating");
+			e.printStackTrace();
+			System.exit(0);
+			return null;
+		}
 	}
 /**
 	public void createDatagramPacket()  {
