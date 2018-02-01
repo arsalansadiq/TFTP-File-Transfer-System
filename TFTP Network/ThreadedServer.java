@@ -35,6 +35,7 @@ public class ThreadedServer {
 			}
 			
 			//new thread pass received packet 
+			System.out.println("THE PORT IS *********lasfdkjaslfjsdljlkasj*" + receivePacket.getPort());
 			Runnable newClient = new ClientConnectionThread(receivePacket);
 			new Thread(newClient).start();
 		}

@@ -14,6 +14,8 @@ public class IntermediateHost {
 	private DatagramPacket sendPacket;
 	private DatagramSocket sendSocket;
 	private byte data[] = new byte[4];
+	private DatagramPacket infoPacket;
+	private byte info[] = new byte[512];
 
 
 	public IntermediateHost() {
@@ -117,23 +119,24 @@ public class IntermediateHost {
 
 
 ///////////////////////////COMMENTED BECAUSE COULDNT RECEIVE INFO FROM SERVER
-			
-			//receivePacket = new DatagramPacket(data, 4); //create a new packet
+			info = new byte [512];
+			infoPacket = new DatagramPacket(info, info.length); //create a new packet
 			
 			try {
-				sendReceiveSocket.receive(receivePacket);
+				receiveSocket.receive(infoPacket);
+				System.out.println("ive reached here");
 			} catch (IOException e) {
 				e.printStackTrace();
 				System.exit(0);
 			}
 
 			System.out.println("Server: Packet received:");
-			System.out.println("From host: " + receivePacket.getAddress());
-			System.out.println("Host port: " + receivePacket.getPort());
-			int len11 = receivePacket.getLength();
+			System.out.println("From host: " + infoPacket.getAddress());
+			System.out.println("Host port: " + infoPacket.getPort());
+			int len11 = infoPacket.getLength();
 			System.out.println("Length: " + len11 + " bytes");
-			for (int i = 0; i<4 ; i++) {
-				data[i] = receivePacket.getData()[i];
+			for (int i = 0; i<info.length ; i++) {
+				info[i] = infoPacket.getData()[i];
 			}
 			
 			System.out.print("Containing: "); 
@@ -147,14 +150,7 @@ public class IntermediateHost {
 				se.printStackTrace();
 				System.exit(0);
 			}
-//			System.out.println(sendPacket.getLength());
-//			try {
-//				sendReceiveSocket.receive(sendPacket);
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//				System.exit(0);
-//			}
-//			
+		
 			
 			sendPacket = new DatagramPacket (data, 4, receivePacket.getAddress(), clientPort);
 			try {
@@ -164,7 +160,26 @@ public class IntermediateHost {
 				System.exit(0);
 			}
 			sendSocket.close();
+			
+	/*		
+		info = new byte[512];
+			infoPacket = new DatagramPacket(info, info.length, receivePacket.getAddress(), clientPort); //create a new packet
+
+			try {
+				sendReceiveSocket.receive(infoPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
+
+			System.out.println("GOT THE PACKET************************");
+			
+			
+	*/		
 		}
+
+		
+		
 		
 
 	}

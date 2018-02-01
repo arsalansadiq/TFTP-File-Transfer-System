@@ -6,11 +6,13 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramPacket receivePacket;
 	private byte data[];
 	private byte msg[];
+	private DatagramPacket sendPacket;
+	
 	public ClientConnectionThread(DatagramPacket receivePacket) {
 		// store parameter for later user
 		this.receivePacket = receivePacket;
 		this.data = receivePacket.getData();
-		
+	
 	}
 
 	public void run() {
@@ -67,7 +69,7 @@ public class ClientConnectionThread implements Runnable {
 		try { 
 			//gotta fix directory
 			//jeffs directory:C:\Users\Jeff\Documents\GitHub\TFTP-File-Transfer-System\TFTP Network
-			return new FileInputStream(new File("C:/Users/Jeff/Documents/GitHub/TFTP-File-Transfer-System/TFTP Network", fileNameString)); 			 
+			return new FileInputStream(new File("C:/Users/alybarolia/Documents/text", fileNameString)); 			 
 		} catch (FileNotFoundException e) {
 			System.out.println("Error making file input stream. --TERMINATING--"); 
 			e.printStackTrace();
@@ -89,9 +91,10 @@ public class ClientConnectionThread implements Runnable {
 		System.arraycopy(packet.getData(), 2, packetData, 0, dataLength);
 		packetString = new String(packetData);
 
-		packetString = new String(packetData);
+	//packetString = new String(packetData);
 		if (packet.getData()[1] == 1 && packet.getData()[0] == 0) { //check the buffer of the received packet to see if its a read 
 			System.out.println("READ REQUEST RECEIVED");
+			System.out.println("THE CLIENT Port IS *****" + packet.getPort());
 			readRequestRecieved(packetString, packet.getAddress(), packet.getPort());
 		} else if (packet.getData()[1] == 2 && packet.getData()[0] == 0) {//check the buffer of the received packet to see if its a write
 			System.out.println("WRITE REQUEST RECEIVED");
@@ -101,7 +104,7 @@ public class ClientConnectionThread implements Runnable {
 	}
 	public void readRequestRecieved(String fileName, InetAddress clientAddress, int clientPort){
 		FileInputStream dataStream = makeInputStream(fileName);	
-		byte fileContent[]=new byte[(int) (new File(fileName)).length()];
+		byte fileContent[] = new byte[(int) (new File(fileName)).length()];
 		try {
 			dataStream.read(fileContent);
 			System.out.println("Datastream created");
@@ -116,10 +119,20 @@ public class ClientConnectionThread implements Runnable {
 	public void writeToClient(byte [] fileContent,InetAddress clientAddress, int clientPort) throws SocketException{
 		DatagramSocket tempSoc = new DatagramSocket();
 		byte[] bytesToWrite=new byte[512];
-		int fileContentIndex=0;
-		for(int i=fileContent.length;i>=0;i-=512){
+		//int fileContentIndex=0;
+		for(int i=fileContent.length ; i>=0 ; i-=512){
 			bytesToWrite=fileContent;
-			new DatagramPacket(bytesToWrite,bytesToWrite.length, clientAddress, clientPort);
+			System.out.println(clientPort);
+			sendPacket = new DatagramPacket(bytesToWrite,bytesToWrite.length, clientAddress, clientPort);
+			
+			try {
+				tempSoc.send(sendPacket); // once user has all the information, send the packet to the intermediate host
+			}catch (IOException e) { // throw exception
+				e.printStackTrace();
+				System.exit(0);
+			}
+			
+			
 		}
 		tempSoc.close();
 	}
