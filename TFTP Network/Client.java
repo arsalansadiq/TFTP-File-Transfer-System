@@ -104,15 +104,7 @@ public class Client {
 		byte fileName[] = accessingFileName.getBytes();
 		System.arraycopy(fileName, 0, buffer, 2, fileName.length);
 		buffer[fileName.length+2]=0;
-		/*
-		//this byte array must be large enough to fit 2 opcode filename and terminating 0
-		byte []fileAccessName= new byte[accessingFileName.getBytes().length+1];
-		fileAccessName=accessingFileName.getBytes();
-		fileAccessName[fileAccessName.length-1]=0;
-		//put byte array in proper form
-		System.arraycopy(fileAccessName, 0, buffer, 2, fileAccessName.length);
-		//TESTTTT PACKET CONTENTS
-		 */
+
 		 
 		System.out.println(buffer+"");
 		System.out.println(new String (buffer));

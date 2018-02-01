@@ -6,7 +6,6 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramPacket receivePacket;
 	private byte data[];
 	private byte msg[];
-
 	public ClientConnectionThread(DatagramPacket receivePacket) {
 		// store parameter for later user
 		this.receivePacket = receivePacket;
@@ -101,11 +100,12 @@ public class ClientConnectionThread implements Runnable {
 		}
 	}
 	public void readRequestRecieved(String fileName, InetAddress clientAddress, int clientPort){
-		FileInputStream dataStream = makeInputStream(fileName);		
+		FileInputStream dataStream = makeInputStream(fileName);	
 		byte fileContent[]=new byte[(int) (new File(fileName)).length()];
 		try {
 			dataStream.read(fileContent);
 			System.out.println("Datastream created");
+			writeToClient(fileContent, clientAddress, clientPort);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Error writing from designated file using data stream to byte array in method:readRequestRecieved");
@@ -113,5 +113,14 @@ public class ClientConnectionThread implements Runnable {
 		}
 
 	}
-
+	public void writeToClient(byte [] fileContent,InetAddress clientAddress, int clientPort) throws SocketException{
+		DatagramSocket tempSoc = new DatagramSocket();
+		byte[] bytesToWrite=new byte[512];
+		int fileContentIndex=0;
+		for(int i=fileContent.length;i>=0;i-=512){
+			bytesToWrite=fileContent;
+			new DatagramPacket(bytesToWrite,bytesToWrite.length, clientAddress, clientPort);
+		}
+		tempSoc.close();
+	}
 }
