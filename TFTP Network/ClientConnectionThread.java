@@ -89,17 +89,8 @@ public class ClientConnectionThread implements Runnable {
 		byte[] packetData=new byte[dataLength];
 		System.arraycopy(packet.getData(), 2, packetData, 0, dataLength);
 		packetString = new String(packetData);
-		//testing
-		String test="abc.txt";
-		System.out.println("recieving packet bytes:"+packet.getData());
-		System.out.println("data from packet bytes:"+packetData);
-		System.out.println("Desired string:"+test);
-		System.out.println("Actual string:"+packetString);
-		System.out.println("Desired string as bytes:"+test.getBytes());
-		System.out.println("Actual string as bytess:"+packetString.getBytes());
-		//testing
+
 		packetString = new String(packetData);
-		System.out.println("Test is packet string is correct: "+packetString.equals("abc.txt"));
 		if (packet.getData()[1] == 1 && packet.getData()[0] == 0) { //check the buffer of the received packet to see if its a read 
 			System.out.println("READ REQUEST RECEIVED");
 			readRequestRecieved(packetString, packet.getAddress(), packet.getPort());
@@ -114,6 +105,7 @@ public class ClientConnectionThread implements Runnable {
 		byte fileContent[]=new byte[(int) (new File(fileName)).length()];
 		try {
 			dataStream.read(fileContent);
+			System.out.println("Datastream created");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Error writing from designated file using data stream to byte array in method:readRequestRecieved");
