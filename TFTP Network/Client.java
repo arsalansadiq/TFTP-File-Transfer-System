@@ -72,8 +72,7 @@ public class Client {
 				System.exit(0);
 			}
 		}else {
-			System.out.println("directory already exists -- terminating --");//should be changed
-			System.exit(0);
+			System.out.println("directory already exists -- ok --");//should be changed
 		}
 
 		try { 
@@ -98,11 +97,20 @@ public class Client {
 
 	}
 	public DatagramPacket createRRDatagramPacket(String accessingFileName) {
+		//set opcode bits
 		buffer[0]= 0; 
 		buffer[1] = 1;
-		byte fileAccessName[]=accessingFileName.getBytes();
-		System.arraycopy(fileAccessName, 0, buffer, 2, fileAccessName.length);
+
+		byte fileName[] = accessingFileName.getBytes();
+		System.arraycopy(fileName, 0, buffer, 2, fileName.length);
+		buffer[fileName.length+2]=0;
+
+		 
+		System.out.println(buffer+"");
+		System.out.println(new String (buffer));
+
 		try {
+			//return the read request pack to be sent
 			return new DatagramPacket(buffer, buffer.length,InetAddress.getLocalHost(),  hostPort);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
