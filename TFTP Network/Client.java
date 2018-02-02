@@ -1,253 +1,146 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Arrays;
+import java.io.*;
+import java.net.*;
 import java.util.Scanner;
 
 public class Client {
-
-	//Declaration of variables
-	private DatagramSocket sendReceiveSocket;
+	private InetAddress inetAddress = null;
+	private DatagramSocket sendReceiveSocket = null;
 	private DatagramPacket sendPacket;
 	private DatagramPacket receivePacket;
-	private final int hostPort=23;
-	byte buffer[]  = new byte [128];
-	//private Scanner input;
 
-	public Client() {
+	private final int hostPort = 23;
 
-		try {
-			sendReceiveSocket = new DatagramSocket(); //creation of a sending and receiving socket
-		} catch (SocketException se) { //throw exception
-			se.printStackTrace();
-			System.exit(0);
-		}
-	}
+	private byte[] serverRequest;
+	private byte[] holdReceivingArray;
 
+	private void setup() throws IOException {
+		byte readWriteOPCode = 00;
 
-	public void setup (){
+		inetAddress = InetAddress.getLocalHost();
+		sendReceiveSocket = new DatagramSocket();
+
 		Scanner input = new Scanner(System.in);
 		System.out.println("(R)EAD or (W)RITE");
-		String request = input.next();
-		input = new Scanner(System.in);
+		String requestWR = input.next();
+		if (requestWR.equals("R") || requestWR.equals("r")) {
+			readWriteOPCode = 1;
+		} else if (requestWR.equals("W") || requestWR.equals("w")) {
+			readWriteOPCode = 2;
+		}
+
 		System.out.println("Enter the name of the file");
 		String fileName = input.next();
-		if (request.equalsIgnoreCase("r")){
-			readRequest(fileName);	
-		}
-		else if(request.equalsIgnoreCase("w")){
 
-		}
+		input.close();
 
+		serverRequest = createServerRequest(readWriteOPCode, fileName, "netascii");
 
+		// sending completed request to server
+		sendPacket = new DatagramPacket(serverRequest, serverRequest.length, inetAddress, hostPort);
 
-	}
-	///////////////////////////I/O Streams//////////////////////////////////////
-	public FileInputStream OpenIFile(String path){
-		try { 
-			return new FileInputStream(path); 			 
-		} catch (FileNotFoundException e) {
-			System.out.println("Error making file input stream. --TERMINATING--"); 
-			e.printStackTrace();
-			System.exit(0);
-			return null; 
-		}
-	}
-	public FileOutputStream makeOutputFileStream(String dir){
-		File directory = new File(dir);
-		if(!directory.exists()){
-			try { 
-				directory.createNewFile(); 
-			} 
-			catch (IOException e) { 
-				System.out.println("Error creating new file for output stream. -- TERMINATING --");
-				e.printStackTrace();
-				System.exit(0);
-			}
-		}else {
-			System.out.println("directory already exists -- ok --");//should be changed
-		}
+		sendReceiveSocket.send(sendPacket);
 
-		try { 
-			return new FileOutputStream(directory);
-		} catch (FileNotFoundException e) {
-			//The code should just quit if it somehow comes to this.
-			System.out.println("Error making fileoutput stream -- terminating");
-			e.printStackTrace(); 
-			System.exit(0);
-		}
-		return null;
-	}
-	///////////////////////////I/O Streams//////////////////////////////////////
+		// receiving file from server
+		ByteArrayOutputStream receivingBytes = getFile();
 
-
-	public void readRequest(String fileName) {
-		//if sending a read request, the client has to create a FileOutputStream to a file
-		//which will be holding the data read from the file received by the read request
-		FileOutputStream writingToFile =makeOutputFileStream(fileName);
-		//now must create a datagram packet and send it to the host, (01 for read followed by the filename to be read)
-		sendPacket(createRRDatagramPacket(fileName));
+		writeOutReceivedFile(receivingBytes, fileName);
 
 	}
-	public DatagramPacket createRRDatagramPacket(String accessingFileName) {
-		//set opcode bits
-		buffer[0]= 0; 
-		buffer[1] = 1;
 
-		byte fileName[] = accessingFileName.getBytes();
-		System.arraycopy(fileName, 0, buffer, 2, fileName.length);
-		buffer[fileName.length+2]=0;
+	private byte[] createServerRequest(byte readWriteOPCode, String fileName, String modeType) {
+		int posInArray = 0;
+		byte zero = 0;
 
-		 
-		System.out.println(buffer+"");
-		System.out.println(new String (buffer));
+		int serverRequestLength = 4 + fileName.length() + modeType.length();
 
-		try {
-			//return the read request pack to be sent
-			return new DatagramPacket(buffer, buffer.length,InetAddress.getLocalHost(),  hostPort);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Error in createRRdatagrampacket terminating");
-			e.printStackTrace();
-			System.exit(0);
-			return null;
-		}		
+		byte[] setupFullRequest = new byte[serverRequestLength];
+
+		setupFullRequest[posInArray] = zero; // first element
+		posInArray++;
+		setupFullRequest[posInArray] = readWriteOPCode; // 1 or 2
+		posInArray++;
+
+		// appending filename to byte array
+		for (int i = 0; i < fileName.length(); i++) {
+			setupFullRequest[posInArray] = (byte) fileName.charAt(i);
+			posInArray++;
+		}
+
+		setupFullRequest[posInArray] = zero;
+		posInArray++;
+
+		// appending mode type to byte array
+		for (int j = 0; j < modeType.length(); j++) {
+			setupFullRequest[posInArray] = (byte) modeType.charAt(j);
+			posInArray++;
+		}
+
+		setupFullRequest[posInArray] = zero; //last element of request is byte 0
+		return setupFullRequest;
+
 	}
 
-	public void sendPacket(DatagramPacket packet){
-		System.out.println("CLIENT: PACKET SENT TO SERVER");
-		if (buffer[1] == 1) { //if the 2nd element of the buffer is 1, tell the user its a read request
-			System.out.println("READ REQUEST SENT");
-		} else if (buffer[1] == 2) { //otherwise its a write request
-			System.out.println("WRITE REQUEST SENT");
-		}
-		System.out.println("From host: " + packet.getAddress()); //tell the user where the packet is from
-		System.out.println("Host port: " + packet.getPort()); //which port its coming from
-		int len = packet.getLength();
-		System.out.print("Whats being sent: "); //and what is being sent into the server
-		for (int i= 0; i < buffer.length ; i++) {
-			System.out.print(buffer[i]);
-		}
-		System.out.println("\nLength: " + len + " bytes\n"); //the length in bytes is also provided
-		try {
-			sendReceiveSocket.send(packet); // once user has all the information, send the packet to the intermediate host
-		}catch (IOException e) { // throw exception
-			e.printStackTrace();
-			System.exit(0);
-		}
+	private ByteArrayOutputStream getFile() throws IOException {
+		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
+		int blockNum = 1;
 
-	}
-/**
-	public void createDatagramPacket()  {
+		do {
+			System.out.println("Packet #: " + blockNum);
+			blockNum++;
 
-		//creation of buffer to be sent/received
-		String s = "test.txt";
-		buffer[0]= 0; 
-		buffer[1] = 1;
+			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
+												// opcode + 2 byte 0's
 
-		byte msg[] = s.getBytes();
-		System.arraycopy(msg, 0, buffer, 2, msg.length);
+			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
+					sendReceiveSocket.getLocalPort());
 
-		int pos = msg.length + 2;
-		buffer[pos] = 0;
-
-		String mode = "ocTEt";
-		byte [] modeMsg = mode.getBytes();
-		System.arraycopy(modeMsg, 0, buffer, pos + 1, modeMsg.length);
-
-		int newPos = msg.length + modeMsg.length + 3;
-		buffer[newPos] = 0;
-
-		//SET ALL OTHER NUMBER TO NULL
-		int k = buffer.length - 1;
-		while (k >= 0 && buffer[k] == 0) {
-			k--;
-		}
-		buffer = Arrays.copyOf(buffer, k+1);
-
-
-
-
-		try {
-			sendPacket = new DatagramPacket(buffer, buffer.length, InetAddress.getLocalHost(), 23); //create a new packet to be sent down port 23
-		} catch (UnknownHostException e1) { //throw exception
-			e1.printStackTrace();
-			System.exit(0);
-		}
-
-		//Print statements to tell the user that the packet had been sent, containing all its information
-		System.out.println("CLIENT: PACKET SENT TO SERVER");
-		if (buffer[1] == 1) { //if the 2nd element of the buffer is 1, tell the user its a read request
-			System.out.println("READ REQUEST SENT");
-		} else if (buffer[1] == 2) { //otherwise its a write request
-			System.out.println("WRITE REQUEST SENT");
-		}
-		System.out.println("From host: " + sendPacket.getAddress()); //tell the user where the packet is from
-		System.out.println("Host port: " + sendPacket.getPort()); //which port its coming from
-		int len = sendPacket.getLength();
-		System.out.print("Whats being sent: "); //and what is being sent into the server
-		for (int i= 0; i < buffer.length ; i++) {
-			System.out.print(buffer[i]);
-		}
-		System.out.println("\nLength: " + len + " bytes\n"); //the length in bytes is also provided
-
-
-
-
-		try {
-			sendReceiveSocket.send(sendPacket); // once user has all the information, send the packet to the intermediate host
-		}catch (IOException e) { // throw exception
-			e.printStackTrace();
-			System.exit(0);
-		}
-
-		byte[] data = new byte[128]; 
-		receivePacket = new DatagramPacket(data, data.length); //initiate a new packet
-
-		//=======================================================
-
-		//		try {
-		//			sendReceiveSocket.send(sendPacket); //then send this error request
-		//		}catch (IOException e) {
-		//			e.printStackTrace();
-		//			System.exit(0);
-		//		}
-
-		////////////////////////////////////COMMENTED THIS BECAUSE COULDNT FIND A WAY TO SEND PACKETS FROM SERVER TO INTERMEIDATE HOST
-		try {
 			sendReceiveSocket.receive(receivePacket);
+
+			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+
+			if (requestCode[1] == 5) { // 5 is opcode for error in packet
+				errorOccurred();
+			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
+				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+
+				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+
+				acknowledgeToHost(blockNumber);
+			}
+
+		} while (receivePacket.getLength() < 512);
+		return receivingBytes;
+	}
+
+	private void errorOccurred() {
+
+	}
+
+	private void acknowledgeToHost(byte[] blockNum) {
+		byte[] acknowledgeCode = { 0, 4, blockNum[0], blockNum[1] };
+
+		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
+				receivePacket.getPort());
+		try {
+			sendReceiveSocket.send(acknowledgePacket);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(0);
 		}
-
-		System.out.println("Client: Packet received:");
-		System.out.println("From host: " +
-				receivePacket.getAddress());
-		System.out.println("Host port: " +
-				receivePacket.getPort());
-		int len3 = receivePacket.getLength();
-		System.out.println("Length: " + len3 + " bytes");
-		System.out.print("Containing: " );
-
-
-		sendReceiveSocket.close(); //finally since we are done using this socket, close it so we can use it for other things
-
-
 	}
-*/
-	public static void main(String[] args) {
 
-		Client client = new Client (); //create an instance of the client
+	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
+		try {
+			OutputStream outputStream = new FileOutputStream(fileName);
+			byteArrayOutputStream.writeTo(outputStream);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void main(String[] args) throws IOException {
+		Client client = new Client();
 		client.setup();
-		//client.createDatagramPacket(); //call the method that sends packets
 	}
 
 }
