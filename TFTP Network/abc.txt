@@ -1,0 +1,26 @@
+[ 4-24-2017 16:33:06:707]- FWUPD(1884): ================= Firmware Update ========================
+[ 4-24-2017 16:33:06:709]- FWUPD(1884): Version: 2.4.1.1
+[ 4-24-2017 16:33:06:711]- FWUPD(1884): InitProperties - retrieve props from file 'C:\Users\harsh\AppData\Local\Temp\7zS6679\properties.ini'
+[ 4-24-2017 16:33:06:713]- FWUPD(1884): -\/\/\/- Properties -\/\/\/-
+[ 4-24-2017 16:33:06:715]- FWUPD(1884): PRINTER_SERIESNAME = HP Color LaserJet CP1020 Series
+[ 4-24-2017 16:33:06:717]- FWUPD(1884): BIN_FILES = HP LaserJet CP1025,CP1025.bin, HP LaserJet CP1025nw,CP1025nw.bin, HP LaserJet CP 1025,CP1020_2.pkg, HP LaserJet CP 1025nw,CP1020_2NW.pkg, HP LaserJet CP102*nw,CP1020_2NW.pkg, HP LaserJet CP102*,CP1020_2.pkg
+[ 4-24-2017 16:33:06:719]- FWUPD(1884): DRIVER_NAMES = HP LaserJet Professional CP1020 Series, HP LaserJet CP1021, HP LaserJet CP1022, HP LaserJet CP1023, HP LaserJet CP 1025, HP LaserJet CP1025, HP LaserJet CP1028, HP LaserJet CP1022nw, HP LaserJet CP1025nw, HP LaserJet CP 1025nw, HP LaserJet CP1027nw, HP LaserJet CP1028nw
+[ 4-24-2017 16:33:06:721]- FWUPD(1884): -/\/\/\- Properties -/\/\/\-
+[ 4-24-2017 16:33:06:723]- FWUPD(1884): FindInstalledPrinters(driverList 12 elements)
+[ 4-24-2017 16:33:06:725]- FWUPD(1884):  Found NO printers with our drivername
+[ 4-24-2017 16:33:06:727]- FWUPD(1884): Strings(): stringsDllPath: C:\Users\harsh\AppData\Local\Temp\7zS6679\strings.dll
+[ 4-24-2017 16:33:06:730]- FWUPD(1884): ===>>> ERROR (gle=2, 0x2):  Msg: The system cannot find the file specified.
+  Context: LoadLibraryEx strings dll  m_sHmod == NULL
+[ 4-24-2017 16:33:50:234]- FWUPD(1F84): ================= Firmware Update ========================
+[ 4-24-2017 16:33:50:236]- FWUPD(1F84): Version: 2.4.1.1
+[ 4-24-2017 16:33:50:239]- FWUPD(1F84): InitProperties - retrieve props from file 'C:\Users\harsh\AppData\Local\Temp\7zS73DF\properties.ini'
+[ 4-24-2017 16:33:50:241]- FWUPD(1F84): -\/\/\/- Properties -\/\/\/-
+[ 4-24-2017 16:33:50:243]- FWUPD(1F84): PRINTER_SERIESNAME = HP Color LaserJet CP1020 Series
+[ 4-24-2017 16:33:50:246]- FWUPD(1F84): BIN_FILES = HP LaserJet CP1025,CP1025.bin, HP LaserJet CP1025nw,CP1025nw.bin, HP LaserJet CP 1025,CP1020_2.pkg, HP LaserJet CP 1025nw,CP1020_2NW.pkg, HP LaserJet CP102*nw,CP1020_2NW.pkg, HP LaserJet CP102*,CP1020_2.pkg
+[ 4-24-2017 16:33:50:248]- FWUPD(1F84): DRIVER_NAMES = HP LaserJet Professional CP1020 Series, HP LaserJet CP1021, HP LaserJet CP1022, HP LaserJet CP1023, HP LaserJet CP 1025, HP LaserJet CP1025, HP LaserJet CP1028, HP LaserJet CP1022nw, HP LaserJet CP1025nw, HP LaserJet CP 1025nw, HP LaserJet CP1027nw, HP LaserJet CP1028nw
+[ 4-24-2017 16:33:50:250]- FWUPD(1F84): -/\/\/\- Properties -/\/\/\-
+[ 4-24-2017 16:33:50:253]- FWUPD(1F84): FindInstalledPrinters(driverList 12 elements)
+[ 4-24-2017 16:33:50:256]- FWUPD(1F84):  Found NO printers with our drivername
+[ 4-24-2017 16:33:50:258]- FWUPD(1F84): Strings(): stringsDllPath: C:\Users\harsh\AppData\Local\Temp\7zS73DF\strings.dll
+[ 4-24-2017 16:33:50:261]- FWUPD(1F84): ===>>> ERROR (gle=2, 0x2):  Msg: The system cannot find the file specified.
+  Context: LoadLibraryEx strings dll  m_sHmod == NULL

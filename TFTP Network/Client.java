@@ -88,8 +88,7 @@ public class Client {
 			System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
-			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
-												// opcode + 2 byte 0's
+			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte opcode + 2 byte 0's
 
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
@@ -101,7 +100,7 @@ public class Client {
 			if (requestCode[1] == 5) { // 5 is opcode for error in packet
 				errorOccurred();
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
-				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				byte[] blockNumber = {holdReceivingArray[2], holdReceivingArray[3]};
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
@@ -109,7 +108,7 @@ public class Client {
 				acknowledgeToHost(blockNumber);
 			}
 
-		} while (receivePacket.getLength() < 512);
+		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
 	}
 

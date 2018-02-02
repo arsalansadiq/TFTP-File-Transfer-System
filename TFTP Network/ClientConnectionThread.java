@@ -2,128 +2,125 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.Random;
+
 
 public class ClientConnectionThread implements Runnable {
+
+	private DatagramSocket sendReceiveSocket;
 	private DatagramPacket receivePacket;
+	private DatagramPacket sendDataPacket;
+	private InetAddress inetAddress = null;
+	int receivePort = 88;
 	private byte data[];
-	private byte msg[];
+
 	public ClientConnectionThread(DatagramPacket receivePacket) {
+		try {
+			inetAddress = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			sendReceiveSocket = new DatagramSocket();
+		} catch (SocketException se) {
+			se.printStackTrace();
+			System.exit(0);
+		}
+
 		// store parameter for later user
 		this.receivePacket = receivePacket;
 		this.data = receivePacket.getData();
-		
+
 	}
 
 	public void run() {
-		//process the packet here
-		System.out.println("this thread is now running");
-		deCodePacket(receivePacket);
-		/*
-		System.out.println("\nSERVER: PACKET RECEIVED FROM HOST");
-		if (receivePacket.getData()[1] == 1 && receivePacket.getData()[0] == 0) { //check the buffer of the received packet to see if its a read 
-			System.out.println("READ REQUEST RECEIVED");
-		} else if (receivePacket.getData()[1] == 2 && receivePacket.getData()[0] == 0) {//check the buffer of the received packet to see if its a write
-			System.out.println("WRITE REQUEST RECEIVED");
-		} else if (receivePacket.getData()[0] == 1) {
-			System.out.println("ERROR REQUEST RECEIVED"); //or if its an error
-		}
-		System.out.println("From host: " + receivePacket.getAddress());
-		System.out.println("Host port: " + receivePacket.getPort());
-		int len = receivePacket.getLength();
-		System.out.print("Whats being received: " );
-		System.out.print("\nAs bytes: ");
-		int k = data.length - 1;
-		while (k >= 0 && data[k] == 0) {
-			k--;
-		}
-		data = Arrays.copyOf(data, k+1);
-		for (int i= 0; i < data.length ; i++) {
-			System.out.print(data[i]);
-		}
-		System.out.print("\nAs String: " + new String(data));
-		System.out.println("\nLength: " + len + " bytes");
+		// process the packet here
+		System.out.println("Thread is now running.");
 
-		//-------------------------------------------------------------- decoding of byte array
-		
-		if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 1){
-			byte[] fileName= new byte[receivePacket.getLength()];
-			System.arraycopy(receivePacket.getData(), 2, fileName, 0, fileName.length);
-			
-			System.out.println("FileName: " + new String(fileName));
-			String fileNameString = new String (fileName);
-			FileInputStream dataStream = makeInputStream(fileNameString);			
-			byte fileContent[]=new byte[(int) (new File(fileNameString)).length()];
+		if (data[0] == 0 && data[1] == 1) {
 			try {
-				dataStream.read(fileContent);
+				readRequestReceived();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				System.out.println("Error writing from data stream to byte array in server");
 				e.printStackTrace();
 			}
-			System.out.println(fileContent);
-		}*/
-
-	}
-	public FileInputStream makeInputStream(String fileNameString){
-		try { 
-			Path currentRelativePath = Paths.get("");
-			String currentPath = currentRelativePath.toAbsolutePath().toString();
-			System.out.println("Current relative path is: " + currentPath);
-			return new FileInputStream(new File(currentPath, fileNameString)); 			 
-		} catch (FileNotFoundException e) {
-			System.out.println("Error making file input stream. --TERMINATING--"); 
-			e.printStackTrace();
-			System.exit(0);
-			return null; 
-		}
-	}
-	public void deCodePacket(DatagramPacket packet){
-		int dataLength=0;
-		String packetString;
-		//find the length of the data portion of the packet
-		//test contents of packet
-		System.out.println(new String(packet.getData()));
-		for(int i=2;packet.getData()[i]!=0;i++){
-			dataLength++;
-		}
-		System.out.println("Data length = "+dataLength);
-		byte[] packetData=new byte[dataLength];
-		System.arraycopy(packet.getData(), 2, packetData, 0, dataLength);
-		packetString = new String(packetData);
-
-		packetString = new String(packetData);
-		if (packet.getData()[1] == 1 && packet.getData()[0] == 0) { //check the buffer of the received packet to see if its a read 
-			System.out.println("READ REQUEST RECEIVED");
-			readRequestRecieved(packetString, packet.getAddress(), packet.getPort());
-		} else if (packet.getData()[1] == 2 && packet.getData()[0] == 0) {//check the buffer of the received packet to see if its a write
-			System.out.println("WRITE REQUEST RECEIVED");
-		} else if (packet.getData()[0] == 1) {
-			System.out.println("ERROR REQUEST RECEIVED"); //or if its an error
-		}
-	}
-	public void readRequestRecieved(String fileName, InetAddress clientAddress, int clientPort){
-		FileInputStream dataStream = makeInputStream(fileName);	
-		byte fileContent[]=new byte[(int) (new File(fileName)).length()];
-		try {
-			dataStream.read(fileContent);
-			System.out.println("Datastream created");
-			writeToClient(fileContent, clientAddress, clientPort);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Error writing from designated file using data stream to byte array in method:readRequestRecieved");
-			e.printStackTrace();
+		} else if (data[0] == 0 && data[1] == 2) {
+			// writeRequestReceived();
 		}
 
 	}
-	public void writeToClient(byte [] fileContent,InetAddress clientAddress, int clientPort) throws SocketException{
-		DatagramSocket tempSoc = new DatagramSocket();
-		byte[] bytesToWrite=new byte[512];
-		int fileContentIndex=0;
-		for(int i=fileContent.length;i>=0;i-=512){
-			bytesToWrite=fileContent;
-			new DatagramPacket(bytesToWrite,bytesToWrite.length, clientAddress, clientPort);
+
+	private void readRequestReceived() throws IOException {
+		// get filename, if file is available send in chunks to client on a new
+		// random port
+		// wait for acknowledgment then send another chunk until transfer is
+		// complete
+
+		int nameLength = 0;
+		String fileName;
+		for (int i = 2; receivePacket.getData()[i] != 0; i++) {
+			nameLength++;
 		}
-		tempSoc.close();
+
+		byte[] packetData = new byte[nameLength];
+		System.arraycopy(receivePacket.getData(), 2, packetData, 0, nameLength);
+		fileName = new String(packetData);
+
+		System.out.println("Received file name is: " + fileName);
+
+		FileInputStream fis;
+
+		Path currentRelativePath = Paths.get("");
+		String currentPath = currentRelativePath.toAbsolutePath().toString();
+		System.out.println("Current relative path is: " + currentPath);
+
+		fis = new FileInputStream(new File(currentPath, fileName));
+
+		byte[] readDataFromFile = new byte[512]; // 512 byte chunks
+
+		int bytesRead = fis.read(readDataFromFile);
+		
+		int blockNumber = 1;
+		
+		Random rand = new Random();
+
+		int  randomPort = rand.nextInt(10000) + 100; //random port between 100 and 10000
+
+		while (bytesRead != -1) {
+			// bytesRead should contain the number of bytes read in this
+			// operation.
+			// send data to client on random port
+	
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, randomPort);
+			sendReceiveSocket.send(sendDataPacket);
+			
+			//wait for ack
+			
+			blockNumber++;
+			bytesRead = fis.read(readDataFromFile);
+		}
+
+		fis.close();
+
 	}
+
+	private byte[] createDataPacket(int blockNumber, byte[] readDataFromFile) {
+		
+		byte[] blockNumArray = new byte[2];
+		
+		blockNumArray[0] = (byte) (blockNumber & 0xFF);
+		blockNumArray[1] = (byte) ((blockNumber >> 8) & 0xFF);
+		
+		byte[] dataToSendOPcode = {0, 3, blockNumArray[0], blockNumArray[1]} ;
+
+		byte[] combined = new byte[dataToSendOPcode.length + readDataFromFile.length];
+
+		for (int i = 0; i < combined.length; ++i)
+		{
+		    combined[i] = i < dataToSendOPcode.length ? dataToSendOPcode[i] : readDataFromFile[i - dataToSendOPcode.length];
+		}
+		
+		return combined;
+	}
+
 }
