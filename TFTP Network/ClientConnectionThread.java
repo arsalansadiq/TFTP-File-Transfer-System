@@ -15,6 +15,7 @@ public class ClientConnectionThread implements Runnable {
 	private byte data[];
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
+
 		try {
 			inetAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
@@ -85,20 +86,23 @@ public class ClientConnectionThread implements Runnable {
 		Random rand = new Random();
 
 		int  randomPort = rand.nextInt(10000) + 100; //random port between 100 and 10000
+		int ka = 0;
 
-		while (bytesRead != -1) {
+		//while (bytesRead != -1) {
 			// bytesRead should contain the number of bytes read in this
 			// operation.
 			// send data to client on random port
-	
-			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, randomPort);
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, 23);
 			sendReceiveSocket.send(sendDataPacket);
+			System.out.println("sending from thread to host. replying to rrq");
+			System.out.println("packet is this from thread: "+ new String(sendDataPacket.getData()));
 			
 			//wait for ack
 			
+			
 			blockNumber++;
 			bytesRead = fis.read(readDataFromFile);
-		}
+		//}
 
 		fis.close();
 
