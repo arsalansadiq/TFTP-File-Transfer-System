@@ -13,6 +13,8 @@ public class ClientConnectionThread implements Runnable {
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
+	
+	private byte[] holdReceivingArray;
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
 		try {
@@ -45,17 +47,84 @@ public class ClientConnectionThread implements Runnable {
 				e.printStackTrace();
 			}
 		} else if (data[0] == 0 && data[1] == 2) {
-			writeRequestReceived();
+			try {
+				writeRequestReceived();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 	}
 
-	private void writeRequestReceived() {
-		sendWriteAcknowledgment();
+	private void writeRequestReceived() throws IOException {
+		sendFirstWriteAcknowledgment();
+		
+		ByteArrayOutputStream receivingBytes = getFile();
+		
+		writeOutReceivedFile(receivingBytes, "writtento.txt");
+		
+	}
+	
+	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
+		try {
+			OutputStream outputStream = new FileOutputStream(fileName);
+			byteArrayOutputStream.writeTo(outputStream);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private ByteArrayOutputStream getFile() throws IOException {
+		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
+		int blockNum = 1;
+
+		do {
+			System.out.println("Packet #: " + blockNum);
+			blockNum++;
+
+			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
+												// opcode + 2 byte 0's
+
+			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
+					sendReceiveSocket.getLocalPort());
+
+			sendReceiveSocket.receive(receivePacket);
+
+			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+
+			if (requestCode[1] == 5) { // 5 is opcode for error in packet
+				errorOccurred();
+			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
+				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+
+				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+
+				acknowledgeToHost(blockNumber);
+			}
+
+		} while (!(receivePacket.getLength() < 512));
+		return receivingBytes;
+	}
+	
+	private void acknowledgeToHost(byte[] blockNum) {
+		byte[] acknowledgeCode = { 0, 4, blockNum[0], blockNum[1] };
+
+		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
+				receivePacket.getPort());
+		try {
+			sendReceiveSocket.send(acknowledgePacket);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void errorOccurred() {
+		
 		
 	}
 
-	private void sendWriteAcknowledgment() {
+	private void sendFirstWriteAcknowledgment() {
 		byte[] acknowledgeCode = { 0, 4, 0, 0};
 
 		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress, receivePacket.getPort());
