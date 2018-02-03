@@ -80,7 +80,7 @@ public class Client {
 
 		fis = new FileInputStream(new File(currentPath, fileName));
 
-		byte[] readDataFromFile = new byte[512]; // 512 byte chunks
+		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
 
 		int bytesRead = fis.read(readDataFromFile);
 
