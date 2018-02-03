@@ -20,6 +20,7 @@ public class Client {
 	String fileName, fileNameToWrite;
 
 	private void setup() throws IOException {
+
 		byte readWriteOPCode = 00;
 
 		inetAddress = InetAddress.getLocalHost();
@@ -34,11 +35,13 @@ public class Client {
 			readWriteOPCode = 2;
 		}
 
-		System.out.println("Enter the name of the file");
+		System.out.println("Enter the name of the file:");
 		fileName = input.next();
 
-		System.out.println("Enter the name of the file to be written to");
-		fileNameToWrite = input.next();
+		if (readWriteOPCode == 1) {
+			System.out.println("Enter the name of the file to be written to:");
+			fileNameToWrite = input.next();
+		}
 
 		input.close();
 
@@ -52,7 +55,6 @@ public class Client {
 		if (readWriteOPCode == 1) {
 			// receiving file from server
 			ByteArrayOutputStream receivingBytes = getFile();
-			// writeOutReceivedFile(receivingBytes, fileName);
 			writeOutReceivedFile(receivingBytes, fileNameToWrite);
 		} else if (readWriteOPCode == 2) {
 			byte buffer[] = new byte[4];
@@ -60,7 +62,7 @@ public class Client {
 			sendReceiveSocket.receive(receiveAckPacket);
 
 			if (buffer[0] == 0 && buffer[1] == 4 && buffer[2] == 0 && buffer[3] == 0) {
-				System.out.println("Ack Received for our sent write request");
+				System.out.println("Acknowledgment received for our write request, now beginning to write to server.");
 				beginWritingToServer();
 			}
 
@@ -89,10 +91,7 @@ public class Client {
 			if (bytesRead == 512) {
 				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
 						readDataFromFile.length, inetAddress, 23);
-			}
-			// else if (bytesRead<=0){
-			// break;
-			else {
+			} else {
 				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
 						inetAddress, 23);
 			}
@@ -100,14 +99,20 @@ public class Client {
 			// operation.
 			// send data to client on random port
 			sendReceiveSocket.send(sendDataPacket);
-			System.out.println("sending write info from client to host");
-			// System.out.println("packet is this from thread: "+ new
-			// String(sendDataPacket.getData()));
+			System.out.println("Sent data packet to server, writing to server.");
 
-			// wait for ack
+			// wait for acknowledgment
 
 			sendReceiveSocket.receive(sendDataPacket);
-			System.out.println("acknolwdgement receiveed number " + blockNumber);
+
+			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
+				int checkBlock = sendDataPacket.getData()[2] + sendDataPacket.getData()[3];
+				System.out
+						.println("Acknowledgment received for our write in progress with block number: " + checkBlock);
+				if (blockNumber != checkBlock) {
+					errorOccurred();
+				}
+			}
 
 			blockNumber++;
 			bytesRead = fis.read(readDataFromFile);
@@ -204,6 +209,7 @@ public class Client {
 	}
 
 	private void errorOccurred() {
+		System.out.println("ERROR HAS OCCURRED");
 
 	}
 

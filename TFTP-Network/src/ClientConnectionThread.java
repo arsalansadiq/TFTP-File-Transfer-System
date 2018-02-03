@@ -3,7 +3,7 @@ import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
-
+import java.util.Scanner;
 
 public class ClientConnectionThread implements Runnable {
 
@@ -13,8 +13,10 @@ public class ClientConnectionThread implements Runnable {
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
-	
+
 	private byte[] holdReceivingArray;
+
+	String fileNameToWrite;
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
 		try {
@@ -58,13 +60,19 @@ public class ClientConnectionThread implements Runnable {
 
 	private void writeRequestReceived() throws IOException {
 		sendFirstWriteAcknowledgment();
-		
+
 		ByteArrayOutputStream receivingBytes = getFile();
-		
-		writeOutReceivedFile(receivingBytes, "writtento.txt");
-		
+
+		Scanner input = new Scanner(System.in);
+		System.out.println("Enter the name of the file to be written to:");
+		fileNameToWrite = input.next();
+		input.close();
+
+		writeOutReceivedFile(receivingBytes, fileNameToWrite);
+		System.out.println("Writing to file is done.");
+
 	}
-	
+
 	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
 		try {
 			OutputStream outputStream = new FileOutputStream(fileName);
@@ -73,7 +81,7 @@ public class ClientConnectionThread implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 1;
@@ -106,7 +114,7 @@ public class ClientConnectionThread implements Runnable {
 		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
 	}
-	
+
 	private void acknowledgeToHost(byte[] blockNum) {
 		byte[] acknowledgeCode = { 0, 4, blockNum[0], blockNum[1] };
 
@@ -120,20 +128,20 @@ public class ClientConnectionThread implements Runnable {
 	}
 
 	private void errorOccurred() {
-		
-		
+		System.out.println("ERROR HAS OCCURRED");
 	}
 
 	private void sendFirstWriteAcknowledgment() {
-		byte[] acknowledgeCode = { 0, 4, 0, 0};
+		byte[] acknowledgeCode = { 0, 4, 0, 0 };
 
-		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress, receivePacket.getPort());
+		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
+				receivePacket.getPort());
 		try {
 			sendReceiveSocket.send(acknowledgePacket);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	private void readRequestReceived() throws IOException {
@@ -168,34 +176,37 @@ public class ClientConnectionThread implements Runnable {
 
 		int blockNumber = 1;
 
-
 		while (bytesRead != -1) {
 			System.out.println("bytes read is: " + bytesRead);
-			if(bytesRead==512){
-				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, 23);
-			}
-			//else if (bytesRead<=0){
-				//break;
-			else{
-				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead+4, inetAddress, 23);
+			if (bytesRead == 512) {
+				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
+						readDataFromFile.length, inetAddress, 23);
+			} else {
+				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
+						inetAddress, 23);
 			}
 			// bytesRead should contain the number of bytes read in this
 			// operation.
 			// send data to client on random port
 			sendReceiveSocket.send(sendDataPacket);
-			System.out.println("sending from thread to host. replying to rrq");
-			//System.out.println("packet is this from thread: "+ new String(sendDataPacket.getData()));
+			System.out.println("Sending data packet from thread to host. Replying to read request");
 
-			//wait for ack
-
+			// wait for acknowledgment
 			sendReceiveSocket.receive(sendDataPacket);
-			System.out.println("acknolwdgement receiveed number " + blockNumber);
+
+			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
+				int checkBlock = sendDataPacket.getData()[2] + sendDataPacket.getData()[3];
+				System.out.println(
+						"Acknowledgment from client, sending file for read request in progress with block number :"
+								+ checkBlock);
+				if (blockNumber != checkBlock) {
+					errorOccurred();
+				}
+			}
 
 			blockNumber++;
 			bytesRead = fis.read(readDataFromFile);
 		}
-
-
 
 		fis.close();
 
@@ -208,13 +219,13 @@ public class ClientConnectionThread implements Runnable {
 		blockNumArray[0] = (byte) (blockNumber & 0xFF);
 		blockNumArray[1] = (byte) ((blockNumber >> 8) & 0xFF);
 
-		byte[] dataToSendOPcode = {0, 3, blockNumArray[0], blockNumArray[1]} ;
+		byte[] dataToSendOPcode = { 0, 3, blockNumArray[0], blockNumArray[1] };
 
 		byte[] combined = new byte[dataToSendOPcode.length + readDataFromFile.length];
 
-		for (int i = 0; i < combined.length; ++i)
-		{
-			combined[i] = i < dataToSendOPcode.length ? dataToSendOPcode[i] : readDataFromFile[i - dataToSendOPcode.length];
+		for (int i = 0; i < combined.length; ++i) {
+			combined[i] = i < dataToSendOPcode.length ? dataToSendOPcode[i]
+					: readDataFromFile[i - dataToSendOPcode.length];
 		}
 
 		return combined;

@@ -8,7 +8,7 @@ public class ThreadedServer {
 	int receivePort = 69;
 
 	public ThreadedServer() {
-		
+
 		try {
 			receiveSocket = new DatagramSocket(receivePort);
 		} catch (SocketException se) {
@@ -21,7 +21,7 @@ public class ThreadedServer {
 	public void receivingServer() {
 		data = new byte[128];
 
-		for (;;) {
+		while (true) {
 			receivePacket = new DatagramPacket(data, data.length);
 
 			try {
@@ -33,17 +33,17 @@ public class ThreadedServer {
 				System.out.println("IOException occured!");
 				System.exit(0);
 			}
-			
-			//new thread pass received packet 
+
+			// new thread pass received packet
 			Runnable newClient = new ClientConnectionThread(receivePacket);
 			new Thread(newClient).start();
 		}
 	}
-	
-	public void close(){
+
+	public void close() {
 		receiveSocket.close();
 	}
-	
+
 	public static void main(String[] args) {
 		ThreadedServer server = new ThreadedServer();
 		server.receivingServer();
