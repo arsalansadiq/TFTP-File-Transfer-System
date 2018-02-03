@@ -162,13 +162,18 @@ public class ClientConnectionThread implements Runnable {
 
 		System.out.println("Received file name is: " + fileName);
 
-		FileInputStream fis;
+		FileInputStream fis = null;
 
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 		System.out.println("Current relative path is: " + currentPath);
 
-		fis = new FileInputStream(new File(currentPath, fileName));
+		try {
+			fis = new FileInputStream(new File(currentPath, fileName));
+		} catch (FileNotFoundException e) {
+			System.out.println("File doesn't exist at server side");
+			System.exit(0);
+		}
 
 		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
 

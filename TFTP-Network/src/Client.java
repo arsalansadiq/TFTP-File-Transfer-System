@@ -72,13 +72,18 @@ public class Client {
 
 	private void beginWritingToServer() throws IOException {
 
-		FileInputStream fis;
+		FileInputStream fis = null;
 
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 		System.out.println("Current relative path is: " + currentPath);
 
-		fis = new FileInputStream(new File(currentPath, fileName));
+		try {
+			fis = new FileInputStream(new File(currentPath, fileName));
+		} catch (FileNotFoundException e) {
+			System.out.println("File doesn't at client side");
+			System.exit(0);
+		}
 
 		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
 
