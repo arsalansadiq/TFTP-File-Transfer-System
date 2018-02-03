@@ -45,7 +45,7 @@ public class IntermediateHost {
 			sendReceiveSocket.receive(sendReceivePacket);
 			serverThreadPort=sendReceivePacket.getPort();
 			System.out.println("Host: received packet from server thread port:" + serverThreadPort);
-			System.out.println("Host: the received packet from thread has data: " + new String(sendReceivePacket.getData()));
+			//System.out.println("Host: the received packet from thread has data: " + new String(sendReceivePacket.getData()));
 			System.out.println("Sending packet to client port:" + clientPort);
 			sendReceivePacket.setPort(clientPort);
 			sendReceiveSocket.send(sendReceivePacket);

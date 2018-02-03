@@ -45,9 +45,26 @@ public class ClientConnectionThread implements Runnable {
 				e.printStackTrace();
 			}
 		} else if (data[0] == 0 && data[1] == 2) {
-			// writeRequestReceived();
+			writeRequestReceived();
 		}
 
+	}
+
+	private void writeRequestReceived() {
+		sendWriteAcknowledgment();
+		
+	}
+
+	private void sendWriteAcknowledgment() {
+		byte[] acknowledgeCode = { 0, 4, 0, 0};
+
+		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress, receivePacket.getPort());
+		try {
+			sendReceiveSocket.send(acknowledgePacket);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	private void readRequestReceived() throws IOException {
@@ -82,27 +99,23 @@ public class ClientConnectionThread implements Runnable {
 
 		int blockNumber = 1;
 
-		Random rand = new Random();
 
-		int  randomPort = rand.nextInt(10000) + 100; //random port between 100 and 10000
-		int ka = 0;
-		//
 		while (bytesRead != -1) {
 			System.out.println("bytes read is: " + bytesRead);
-			if(bytesRead<516){
-				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead, inetAddress, 23);
+			if(bytesRead==512){
+				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, 23);
 			}
 			//else if (bytesRead<=0){
 				//break;
 			else{
-				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, 23);
+				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead+4, inetAddress, 23);
 			}
 			// bytesRead should contain the number of bytes read in this
 			// operation.
 			// send data to client on random port
 			sendReceiveSocket.send(sendDataPacket);
 			System.out.println("sending from thread to host. replying to rrq");
-			System.out.println("packet is this from thread: "+ new String(sendDataPacket.getData()));
+			//System.out.println("packet is this from thread: "+ new String(sendDataPacket.getData()));
 
 			//wait for ack
 
