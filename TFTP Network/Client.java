@@ -43,7 +43,8 @@ public class Client {
 		// receiving file from server
 		ByteArrayOutputStream receivingBytes = getFile();
 
-		writeOutReceivedFile(receivingBytes, fileName);
+		//writeOutReceivedFile(receivingBytes, fileName);
+		writeOutReceivedFile(receivingBytes, "writetest.txt");
 
 	}
 

@@ -15,13 +15,12 @@ public class ClientConnectionThread implements Runnable {
 	private byte data[];
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
-
 		try {
 			inetAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		
+
 		try {
 			sendReceiveSocket = new DatagramSocket();
 		} catch (SocketException se) {
@@ -80,50 +79,62 @@ public class ClientConnectionThread implements Runnable {
 		byte[] readDataFromFile = new byte[512]; // 512 byte chunks
 
 		int bytesRead = fis.read(readDataFromFile);
-		
+
 		int blockNumber = 1;
-		
+
 		Random rand = new Random();
 
 		int  randomPort = rand.nextInt(10000) + 100; //random port between 100 and 10000
 		int ka = 0;
-
-		//while (bytesRead != -1) {
+		//
+		while (bytesRead != -1) {
+			System.out.println("bytes read is: " + bytesRead);
+			if(bytesRead<516){
+				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead, inetAddress, 23);
+			}
+			//else if (bytesRead<=0){
+				//break;
+			else{
+				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, 23);
+			}
 			// bytesRead should contain the number of bytes read in this
 			// operation.
 			// send data to client on random port
-			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length, inetAddress, 23);
 			sendReceiveSocket.send(sendDataPacket);
 			System.out.println("sending from thread to host. replying to rrq");
 			System.out.println("packet is this from thread: "+ new String(sendDataPacket.getData()));
-			
+
 			//wait for ack
-			
-			
+
+			sendReceiveSocket.receive(sendDataPacket);
+			System.out.println("acknolwdgement receiveed number " + blockNumber);
+
 			blockNumber++;
 			bytesRead = fis.read(readDataFromFile);
-		//}
+		}
+
+
 
 		fis.close();
 
 	}
 
 	private byte[] createDataPacket(int blockNumber, byte[] readDataFromFile) {
-		
+
 		byte[] blockNumArray = new byte[2];
-		
+
 		blockNumArray[0] = (byte) (blockNumber & 0xFF);
 		blockNumArray[1] = (byte) ((blockNumber >> 8) & 0xFF);
-		
+
 		byte[] dataToSendOPcode = {0, 3, blockNumArray[0], blockNumArray[1]} ;
 
 		byte[] combined = new byte[dataToSendOPcode.length + readDataFromFile.length];
 
 		for (int i = 0; i < combined.length; ++i)
 		{
-		    combined[i] = i < dataToSendOPcode.length ? dataToSendOPcode[i] : readDataFromFile[i - dataToSendOPcode.length];
+			combined[i] = i < dataToSendOPcode.length ? dataToSendOPcode[i] : readDataFromFile[i - dataToSendOPcode.length];
 		}
-		
+
 		return combined;
 	}
 

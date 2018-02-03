@@ -3,7 +3,7 @@ import java.net.*;
 
 public class IntermediateHost {
 	private DatagramSocket sendReceiveSocket = null;
-	private DatagramPacket receivePacket;
+	private DatagramPacket sendReceivePacket;
 	private InetAddress inetAddress = null;
 	private final int serverPort=69;
 	public IntermediateHost() {
@@ -24,24 +24,31 @@ public class IntermediateHost {
 
 	public void run() throws IOException{
 		byte data[] = new byte[516];
-		receivePacket = new DatagramPacket(data, data.length);
-		int clientPort, serverThreadPort;
+		sendReceivePacket = new DatagramPacket(data, data.length);
+		int clientPort, serverThreadPort=0;
 		while(true){
 			System.out.println("HOST: WAITING FOR PACKET TO BE RECEIVED FROM CLIENT...\n");
-			sendReceiveSocket.receive(receivePacket);
-			clientPort=receivePacket.getPort();
+			sendReceiveSocket.receive(sendReceivePacket);
+			clientPort=sendReceivePacket.getPort();
 			System.out.println("Host: received packet from client port:" + clientPort);
-			System.out.println("Sending packet to server port:" + serverPort);
-			receivePacket.setPort(serverPort);
-			sendReceiveSocket.send(receivePacket);
-			System.out.println("HOST: WAITING FOR PACKET TO BE RECEIVED FROM SERVER...\n");
-			sendReceiveSocket.receive(receivePacket);
-			serverThreadPort=receivePacket.getPort();
+			//if rrq or wrq is recieved then send to server
+			if ((data[0] == 0 && data[1] == 1)||(data[0] == 0 && data[1] == 2)) {
+				System.out.println("Sending packet to server port:" + serverPort);
+				sendReceivePacket.setPort(serverPort);
+			}
+			else  {//send to thread
+				System.out.println("Sending packet to threaded server port:" + serverThreadPort);
+				sendReceivePacket.setPort(serverThreadPort);
+			}			
+			sendReceiveSocket.send(sendReceivePacket);
+			System.out.println("HOST: WAITING FOR PACKET TO BE RECEIVED FROM SERVER THREAD PORT...\n");
+			sendReceiveSocket.receive(sendReceivePacket);
+			serverThreadPort=sendReceivePacket.getPort();
 			System.out.println("Host: received packet from server thread port:" + serverThreadPort);
-			System.out.println("Host: the received packet from thread has data: " + new String(receivePacket.getData()));
+			System.out.println("Host: the received packet from thread has data: " + new String(sendReceivePacket.getData()));
 			System.out.println("Sending packet to client port:" + clientPort);
-			receivePacket.setPort(clientPort);
-			sendReceiveSocket.send(receivePacket);
+			sendReceivePacket.setPort(clientPort);
+			sendReceiveSocket.send(sendReceivePacket);
 
 		}
 	}
@@ -50,10 +57,10 @@ public class IntermediateHost {
 
 		while (true) {
 			byte data[] = new byte[516];
-			receivePacket = new DatagramPacket(data, data.length);
-			sendReceiveSocket.receive(receivePacket);
+			sendReceivePacket = new DatagramPacket(data, data.length);
+			sendReceiveSocket.receive(sendReceivePacket);
 			
-			System.out.println("Host: received packet" + receivePacket.getPort());
+			System.out.println("Host: received packet" + sendReceivePacket.getPort());
 		}
 
 	}
