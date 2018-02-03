@@ -1,0 +1,19 @@
+RRQ and WRQ packets (opcodes 1 and 2 respectively) have the format
+   shown in Figure 5-1.  The file name is a sequence of bytes in
+   netascii terminated by a zero byte.  The mode field contains the
+   string "netascii", "octet", or "mail" (or any combination of upper
+   and lower case, such as "NETASCII", NetAscii", etc.) in netascii
+   indicating the three modes defined in the protocol.  A host which
+   receives netascii mode data must translate the data to its own
+   format.  Octet mode is uso transfer a file that is in the 8-bit
+   format of the machine from which the file is being transferred.  It
+   is assumed that each type of machine has a single 8-bit format that
+   is more common, and that that format is chosen.  For example, on a
+   DEC-20, a 36 bit machine, this is four 8-bit bytes to a word with
+   four bits of breakage.  If a host receives a octet file and then
+   returns it, the returned file must be identical to the original.
+   Mail mode uses the name of a mail recipien place of a file and
+   must begin with a WRQ.  Otherwise it is identical to netascii mode.
+   The mail recipient string should be of the form "username" or
+   "username@hostname".  If the second form is used, it allows the
+   option of mail forwarding by a relay computer.
