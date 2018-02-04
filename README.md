@@ -39,7 +39,7 @@ dedicated to serving that client. There will only be one server, with a
 thread for each client connecting 
 
 ### Execution/Termination Instructions
-Begin by placing a file to use for transfers in the root of the program directory. In our testing we used the file "sample.txt". Place any file in the same folder as sample.txt.
+Begin by placing a file to use for transfers in the root of the program directory. In our testing we used the file "sample.txt". Place any file in the same folder as sample.txt you wish to use for transfers.
  * *1) run the ThreadedServer.java class as java applications*
  * *2) run the IntermediateHost.java class as java applications*
  * *3) run the client.java class as java applications*
