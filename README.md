@@ -26,4 +26,4 @@ The goal of this iteration is to create the client, Intermediate Host, and serve
 
  * *1) run the ThreadedServer.java class*
  * *2) run the IntermediateHost.java class*
- * *3) run the client.java class and check the console for all the three classes for details about the package. *
+ * *3) run the client.java class and check the console for all the three classes for details about the package*
