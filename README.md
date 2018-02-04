@@ -48,4 +48,4 @@ Then the user uses the client console window.
 In this window the user should be prompted with "(R)EAD or (W)RITE"
 user types r for read or w for write
 
-Then the user will be asked to enter the name of the file to be accessed, where the user types in the filename (including extension) and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
+Then the user will be asked to enter the name of the file to be accessed, where the user types in the filename (including extension, in our case we used "sample.txt") and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
