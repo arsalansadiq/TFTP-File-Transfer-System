@@ -12,7 +12,7 @@ The goal of this iteration is to create the client, Intermediate Host, and serve
 
 
 
-### There are four files in this project:
+### Included Files:
  * Client.java
  * ClientConnectionThread.java
  * IntermediateHost.java
@@ -29,7 +29,7 @@ is spawned for each client connected. After communication is established between
 server and client, this thread takes over and deals with reads and writes.
 
    * IntermediateHost.java: The intermediate host simply funnels data packets from the client to the server,
-and vice versa. If recieved from client, sends to server. If recieved from server,
+and vice versa. If received from client, sends to server. If received from server,
 sends to client.
 
    * ThreadedServer.java: This class represents the object which is the server. This class has a dedicated
@@ -47,4 +47,4 @@ Then the user uses the client console window.
 In this window the user should be prompted with "(R)EAD or (W)RITE"
 user types r for read or w for write
 
-Then the user will be asked to enter the name of the file to be accessed,where the user types in the filename (includeing extension) and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
+Then the user will be asked to enter the name of the file to be accessed, where the user types in the filename (including extension) and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
