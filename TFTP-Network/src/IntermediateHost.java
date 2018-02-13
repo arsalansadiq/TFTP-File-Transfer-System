@@ -5,6 +5,7 @@ public class IntermediateHost {
 	private DatagramSocket sendReceiveSocket = null;
 	private DatagramPacket sendReceivePacket;
 	private final int serverPort = 69;
+	private int clientPort, threadPort = 0;
 
 	public IntermediateHost() {
 
@@ -19,32 +20,36 @@ public class IntermediateHost {
 	public void run() throws IOException {
 		byte data[] = new byte[516];
 		sendReceivePacket = new DatagramPacket(data, data.length);
-		int clientPort, serverThreadPort = 0;
 
+		System.out.println("Intermediate host: waiting for a packet from client");
+		sendReceiveSocket.receive(sendReceivePacket);
+		clientPort = sendReceivePacket.getPort();
+
+		sendReceivePacket.setPort(serverPort);
+
+		System.out.println("Intermediate host: sending packet to server");
+		sendReceiveSocket.send(sendReceivePacket);
+
+		System.out.println("Intermediate host: waiting for a packet from thread");
+		sendReceiveSocket.receive(sendReceivePacket);
+		threadPort = sendReceivePacket.getPort();
+		System.out.println("Intermediate host: received packet from thread");
+
+		System.out.println("Intermediate host: sending packet to client");
+		sendReceivePacket.setPort(clientPort);
+		sendReceiveSocket.send(sendReceivePacket);
+
+		System.out.println("\nTRANSFER HAS BEGUN.................................");
 		while (true) {
-
-			System.out.println("HOST: WAITING FOR PACKET TO BE RECEIVED FROM CLIENT...\n");
+			System.out.println("Intermediate host: waiting for a packet from client");
 			sendReceiveSocket.receive(sendReceivePacket);
-			clientPort = sendReceivePacket.getPort();
-
-			System.out.println("Host: received packet from client port:" + clientPort);
-			// if read request received or write request received then send to
-			// server
-			if ((data[0] == 0 && data[1] == 1) || (data[0] == 0 && data[1] == 2)) {
-				System.out.println("Sending packet to server port:" + serverPort);
-				sendReceivePacket.setPort(serverPort);
-			} else {// send to thread
-				System.out.println("Sending packet to threaded server port:" + serverThreadPort);
-				sendReceivePacket.setPort(serverThreadPort);
-			}
+			sendReceivePacket.setPort(threadPort);
+			System.out.println("Intermediate host: sending packet to thread");
 			sendReceiveSocket.send(sendReceivePacket);
 
-			System.out.println("HOST: WAITING FOR PACKET TO BE RECEIVED FROM SERVER THREAD PORT...\n");
+			System.out.println("Intermediate host: waiting for a packet from thread");
 			sendReceiveSocket.receive(sendReceivePacket);
-			serverThreadPort = sendReceivePacket.getPort();
-			System.out.println("Host: received packet from server thread port:" + serverThreadPort);
-
-			System.out.println("Sending packet to client port:" + clientPort);
+			System.out.println("Intermediate host: sending packet to client");
 			sendReceivePacket.setPort(clientPort);
 			sendReceiveSocket.send(sendReceivePacket);
 		}
@@ -53,7 +58,5 @@ public class IntermediateHost {
 	public static void main(String[] args) throws IOException {
 		IntermediateHost host = new IntermediateHost();
 		host.run();
-
 	}
-
 }

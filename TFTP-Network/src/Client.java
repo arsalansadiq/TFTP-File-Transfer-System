@@ -20,7 +20,7 @@ public class Client {
 	private byte[] holdReceivingArray;
 
 	private String fileName, fileNameToWrite;
-	
+
 	private FileInputStream fis = null;
 
 	private void setup() throws IOException {
@@ -51,20 +51,19 @@ public class Client {
 
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
-		//System.out.println("Current relative path is: " + currentPath);
+		// System.out.println("Current relative path is: " + currentPath);
 
-		if (readWriteOPCode == 2){
-		
-		try {
-			fis = new FileInputStream(new File(currentPath, fileName));
-		} catch (FileNotFoundException e) {
-			System.out.println("File not found on client side");
-			System.exit(0);
-		}
+		if (readWriteOPCode == 2) {
+
+			try {
+				fis = new FileInputStream(new File(currentPath, fileName));
+			} catch (FileNotFoundException e) {
+				System.out.println("File not found on client side");
+				System.exit(0);
+			}
 		}
 
 		serverRequest = createServerRequest(readWriteOPCode, fileName, "netascii");
-		
 
 		sendPacket = new DatagramPacket(serverRequest, serverRequest.length, inetAddress, hostPort);
 
@@ -91,19 +90,21 @@ public class Client {
 
 	private void beginWritingToServer() throws IOException {
 
-//		Path currentRelativePath = Paths.get("");
-//		String currentPath = currentRelativePath.toAbsolutePath().toString();
-//		System.out.println("Current relative path is: " + currentPath);
+		// Path currentRelativePath = Paths.get("");
+		// String currentPath = currentRelativePath.toAbsolutePath().toString();
+		// System.out.println("Current relative path is: " + currentPath);
 
-//		try {
-//			fis = new FileInputStream(new File(currentPath, fileName));
-//		} catch (FileNotFoundException e) {
-//			byte[] errorPacket = createErrorPacket(2, "File not found from error packet");
-//			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
-//			sendReceiveSocket.send(sendErrorPacket);
-//			System.out.println("Sent error packet to server");
-//			System.exit(0);
-//		}
+		// try {
+		// fis = new FileInputStream(new File(currentPath, fileName));
+		// } catch (FileNotFoundException e) {
+		// byte[] errorPacket = createErrorPacket(2, "File not found from error
+		// packet");
+		// sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length,
+		// inetAddress, 23);
+		// sendReceiveSocket.send(sendErrorPacket);
+		// System.out.println("Sent error packet to server");
+		// System.exit(0);
+		// }
 
 		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
 
@@ -132,9 +133,10 @@ public class Client {
 
 			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
 				int checkBlock = sendDataPacket.getData()[2] + sendDataPacket.getData()[3];
-				System.out.println("Acknowledgment received for our write in progress with block number: " + checkBlock);
+				System.out
+						.println("Acknowledgment received for our write in progress with block number: " + checkBlock);
 				if (blockNumber != checkBlock) {
-					//errorOccurred();
+					// errorOccurred();
 				}
 			}
 
@@ -204,26 +206,26 @@ public class Client {
 		byte zeroByte = 0;
 		byte errorOpCode = 05;
 		byte[] errorCodeAsBytes = new byte[2];
-		
+
 		int errorPacketLength = 4 + errorMessage.length() + 1;
 
 		byte[] setupErrorPacket = new byte[errorPacketLength];
 		setupErrorPacket[posInErrorArray] = errorOpCode;
 		posInErrorArray++;
 		posInErrorArray++;
-		
+
 		setupErrorPacket[posInErrorArray] = (byte) errorCode;
 
 		for (int i = 0; i < errorMessage.length(); i++) {
 			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
 			posInErrorArray++;
 		}
-		
+
 		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
 		posInErrorArray++;
 		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
 		posInErrorArray++;
-		
+
 		setupErrorPacket[posInErrorArray] = zeroByte;
 
 		return setupErrorPacket;
@@ -246,9 +248,11 @@ public class Client {
 
 			sendReceiveSocket.receive(receivePacket);
 
-			byte[] requestCode = {holdReceivingArray[0], holdReceivingArray[1] };
+			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
-			if (requestCode[0] == 0 && requestCode[1] == 5) { // 5 is opcode for error in packet
+			if (requestCode[0] == 0 && requestCode[1] == 5) { // 5 is opcode for
+																// error in
+																// packet
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
@@ -270,9 +274,9 @@ public class Client {
 		}
 
 		byte[] packetData = new byte[nameLength];
-		System.arraycopy(errorPacket.getData(), 2, packetData, 0, nameLength-1);
-		String errorMessage= new String(packetData);
-		
+		System.arraycopy(errorPacket.getData(), 2, packetData, 0, nameLength - 1);
+		String errorMessage = new String(packetData);
+
 		System.out.println(errorMessage);
 
 	}
