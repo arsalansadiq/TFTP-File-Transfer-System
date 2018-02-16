@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.AccessControlException;
+import java.security.AccessController;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -15,6 +17,9 @@ public class ClientConnectionThread implements Runnable {
 	private byte data[];
 
 	private byte[] holdReceivingArray;
+	private FileInputStream fis = null;
+	private DatagramPacket sendErrorPacket;
+	private String fileName;
 
 	String fileNameToWrite;
 
@@ -49,27 +54,88 @@ public class ClientConnectionThread implements Runnable {
 				e.printStackTrace();
 			}
 		} else if (data[0] == 0 && data[1] == 2) {
-			try {
-				writeRequestReceived();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			writeRequestReceived();
 		}
 
 	}
 
-	private void writeRequestReceived() throws IOException {
+	private void writeRequestReceived() {
+
+		Path currentRelativePath = Paths.get("");
+		String currentPath = currentRelativePath.toAbsolutePath().toString();
+
+		fileName = getFileName(receivePacket);
+
+		try {
+			fis = new FileInputStream(new File(currentPath, fileName));
+		} catch (IOException e) {
+			byte[] errorPacket = createErrorPacket(2, "File not found from error packet");
+			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+			try {
+				sendReceiveSocket.send(sendErrorPacket);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+
 		sendFirstWriteAcknowledgment();
 
-		ByteArrayOutputStream receivingBytes = getFile();
+		ByteArrayOutputStream receivingBytes;
+		try {
+			receivingBytes = getFile();
+			Scanner input = new Scanner(System.in);
+			System.out.println("Enter the name of the file to be written to:");
+			fileNameToWrite = input.next();
+			input.close();
 
-		Scanner input = new Scanner(System.in);
-		System.out.println("Enter the name of the file to be written to:");
-		fileNameToWrite = input.next();
-		input.close();
+			writeOutReceivedFile(receivingBytes, fileNameToWrite);
+			System.out.println("Writing to file is done.");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		writeOutReceivedFile(receivingBytes, fileNameToWrite);
-		System.out.println("Writing to file is done.");
+	}
+
+	private String getFileName(DatagramPacket fileNamePacket) {
+		int nameLength = 0;
+		for (int i = 2; fileNamePacket.getData()[i] != 0; i++) {
+			nameLength++;
+		}
+
+		byte[] packetData = new byte[nameLength];
+		System.arraycopy(receivePacket.getData(), 2, packetData, 0, nameLength);
+		return new String(packetData);
+	}
+
+	private byte[] createErrorPacket(int errorCode, String errorMessage) {
+		int posInErrorArray = 0;
+		byte zeroByte = 0;
+		byte five = 5;
+
+		int errorPacketLength = 4 + errorMessage.length() + 1;
+
+		byte[] setupErrorPacket = new byte[errorPacketLength];
+		setupErrorPacket[posInErrorArray] = zeroByte;
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = five;
+		posInErrorArray++;
+
+		setupErrorPacket[posInErrorArray] = (byte) errorCode;
+
+		for (int i = 0; i < errorMessage.length(); i++) {
+			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
+			posInErrorArray++;
+		}
+
+		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
+		posInErrorArray++;
+
+		setupErrorPacket[posInErrorArray] = zeroByte;
+
+		return setupErrorPacket;
 
 	}
 
@@ -77,6 +143,7 @@ public class ClientConnectionThread implements Runnable {
 		try {
 			OutputStream outputStream = new FileOutputStream(fileName);
 			byteArrayOutputStream.writeTo(outputStream);
+			outputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -150,25 +217,39 @@ public class ClientConnectionThread implements Runnable {
 		// wait for acknowledgment then send another chunk until transfer is
 		// complete
 
-		int nameLength = 0;
-		String fileName;
-		for (int i = 2; receivePacket.getData()[i] != 0; i++) {
-			nameLength++;
-		}
-
-		byte[] packetData = new byte[nameLength];
-		System.arraycopy(receivePacket.getData(), 2, packetData, 0, nameLength);
-		fileName = new String(packetData);
+		fileName = getFileName(receivePacket);
 
 		System.out.println("Received file name is: " + fileName);
 
-		FileInputStream fis;
+		FileInputStream fis = null;
 
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
-		System.out.println("Current relative path is: " + currentPath);
+		// System.out.println("Current relative path is: " + currentPath);
 
-		fis = new FileInputStream(new File(currentPath, fileName));
+		try {
+			FilePermission fp = new FilePermission(fileName, "read");
+			AccessController.checkPermission(fp);
+		} catch (AccessControlException t) {
+			byte[] errorPacket = createErrorPacket(2, "File "+ fileName + " cannot be read on server side at path " + currentPath);
+			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
+			sendReceiveSocket.send(sendErrorPacket);
+			System.exit(0);
+		}
+
+		try {
+			File file = new File(currentPath, fileName);
+			fis = new FileInputStream(file);
+		} catch (FileNotFoundException e) {
+			byte[] errorPacket = createErrorPacket(2, "File " + fileName + " not found on server at path " + currentPath);
+			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
+			try {
+				sendReceiveSocket.send(sendErrorPacket);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
 
 		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
 
@@ -200,7 +281,7 @@ public class ClientConnectionThread implements Runnable {
 						"Acknowledgment from client, sending file for read request in progress with block number :"
 								+ checkBlock);
 				if (blockNumber != checkBlock) {
-					errorOccurred();
+					// errorOccurred();
 				}
 			}
 

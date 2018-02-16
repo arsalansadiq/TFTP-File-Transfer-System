@@ -26,11 +26,12 @@ public class ThreadedServer {
 
 			try {
 				System.out.println("Server: waiting to receive a packet");
+				// receiveSocket.setSoTimeout(30000);
 				receiveSocket.receive(receivePacket); // wait for a packet
 				System.out.println("Server: packet received");
 			} catch (IOException e) { // throws exception
-				e.printStackTrace();
-				System.out.println("IOException occured!");
+				// e.printStackTrace();
+				System.out.println("SERVER TIMED OUT!");
 				System.exit(0);
 			}
 
