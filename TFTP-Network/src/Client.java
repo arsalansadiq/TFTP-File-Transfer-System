@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.AccessControlException;
+import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -54,11 +56,18 @@ public class Client {
 		// System.out.println("Current relative path is: " + currentPath);
 
 		if (readWriteOPCode == 2) {
-
 			try {
 				fis = new FileInputStream(new File(currentPath, fileName));
 			} catch (FileNotFoundException e) {
-				System.out.println("File not found on client side");
+				System.out.println("File "+ fileName + " not found on client side at path " + currentPath);
+				System.exit(0);
+			}
+			
+			try {
+				FilePermission fp = new FilePermission(fileName, "write");
+				AccessController.checkPermission(fp);
+			} catch (AccessControlException t) {
+				System.out.println("File "+ fileName + " is not writable on client side at path " + currentPath);
 				System.exit(0);
 			}
 		}
@@ -250,9 +259,7 @@ public class Client {
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
-			if (requestCode[0] == 0 && requestCode[1] == 5) { // 5 is opcode for
-																// error in
-																// packet
+			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };

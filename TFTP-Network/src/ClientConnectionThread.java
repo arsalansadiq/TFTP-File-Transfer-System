@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.AccessControlException;
+import java.security.AccessController;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -226,9 +228,20 @@ public class ClientConnectionThread implements Runnable {
 		// System.out.println("Current relative path is: " + currentPath);
 
 		try {
-			fis = new FileInputStream(new File(currentPath, fileName));
+			FilePermission fp = new FilePermission(fileName, "read");
+			AccessController.checkPermission(fp);
+		} catch (AccessControlException t) {
+			byte[] errorPacket = createErrorPacket(2, "File "+ fileName + " cannot be read on server side at path " + currentPath);
+			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
+			sendReceiveSocket.send(sendErrorPacket);
+			System.exit(0);
+		}
+
+		try {
+			File file = new File(currentPath, fileName);
+			fis = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
-			byte[] errorPacket = createErrorPacket(2, "File not found on server at path " + currentPath);
+			byte[] errorPacket = createErrorPacket(2, "File " + fileName + " not found on server at path " + currentPath);
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
