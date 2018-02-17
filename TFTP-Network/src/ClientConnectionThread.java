@@ -74,10 +74,9 @@ public class ClientConnectionThread implements Runnable {
 		Path filePath = Paths.get(currentPath, fileNameToWrite);
 
 		if (Files.exists(filePath)) {
-			byte[] errorPacket = createErrorPacket(6, "File already exits at server side");
+			byte[] errorPacket = createErrorPacket(6, "File already exists at server side");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
 			try {
-				System.out.println("going into try");
 				sendReceiveSocket.send(sendErrorPacket);
 			} catch (IOException e1) {
 				e1.printStackTrace();
