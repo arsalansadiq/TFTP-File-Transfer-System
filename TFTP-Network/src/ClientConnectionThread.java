@@ -79,7 +79,6 @@ public class ClientConnectionThread implements Runnable {
 			System.exit(0);
 		}catch (OutOfMemoryError e){
 			System.out.println("Memory is full\n exiting...");//memory
-			e.printStackTrace();
 			System.exit(0);
 		}
 
