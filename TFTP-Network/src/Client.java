@@ -35,9 +35,9 @@ public class Client {
 		Scanner input = new Scanner(System.in);
 		System.out.println("(R)EAD or (W)RITE");
 		String requestWR = input.next();
-		if (requestWR.equals("R") || requestWR.equals("r")) {
+		if (requestWR.equalsIgnoreCase("r")) {
 			readWriteOPCode = 1;
-		} else if (requestWR.equals("W") || requestWR.equals("w")) {
+		} else if (requestWR.equalsIgnoreCase("w")) {
 			readWriteOPCode = 2;
 		}
 
