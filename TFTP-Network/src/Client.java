@@ -61,6 +61,9 @@ public class Client {
 			} catch (FileNotFoundException e) {
 				System.out.println("File "+ fileName + " not found on client side at path " + currentPath);
 				System.exit(0);
+			} catch (OutOfMemoryError e){
+				System.out.println("Memory is full\n exiting...");//memory
+				System.exit(0);
 			}
 			
 			try {
@@ -297,6 +300,9 @@ public class Client {
 			sendReceiveSocket.send(acknowledgePacket);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}catch (OutOfMemoryError e){
+			System.out.println("Memory is full\n exiting...");//memory
+			System.exit(0);
 		}
 	}
 
@@ -306,6 +312,9 @@ public class Client {
 			byteArrayOutputStream.writeTo(outputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}catch (OutOfMemoryError e){
+			System.out.println("Memory is full\n exiting...");//memory
+			System.exit(0);
 		}
 	}
 

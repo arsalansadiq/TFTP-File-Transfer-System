@@ -77,6 +77,9 @@ public class ClientConnectionThread implements Runnable {
 				e1.printStackTrace();
 			}
 			System.exit(0);
+		}catch (OutOfMemoryError e){
+			System.out.println("Memory is full\n exiting...");//memory
+			System.exit(0);
 		}
 
 		sendFirstWriteAcknowledgment();
@@ -93,6 +96,9 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Writing to file is done.");
 		} catch (IOException e) {
 			e.printStackTrace();
+		}catch (OutOfMemoryError e){
+			System.out.println("Memory is full\n exiting...");//memory
+			System.exit(0);
 		}
 
 	}
@@ -248,6 +254,9 @@ public class ClientConnectionThread implements Runnable {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+			System.exit(0);
+		}catch (OutOfMemoryError e){
+			System.out.println("Memory is full\n exiting...");//memory
 			System.exit(0);
 		}
 
