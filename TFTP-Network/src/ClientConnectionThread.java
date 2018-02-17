@@ -1,10 +1,8 @@
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.AccessControlException;
-import java.security.AccessController;
-import java.util.Random;
 import java.util.Scanner;
 
 public class ClientConnectionThread implements Runnable {
@@ -15,6 +13,8 @@ public class ClientConnectionThread implements Runnable {
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
+
+	// private Path filePath;
 
 	private byte[] holdReceivingArray;
 	private FileInputStream fis = null;
@@ -64,18 +64,25 @@ public class ClientConnectionThread implements Runnable {
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 
-		fileName = getFileName(receivePacket);
+		Scanner input = new Scanner(System.in);
+		System.out.println("Enter the name of the file to be written to:");
+		fileNameToWrite = input.next();
+		input.close();
 
-		try {
-			fis = new FileInputStream(new File(currentPath, fileName));
-		} catch (IOException e) {
-			byte[] errorPacket = createErrorPacket(2, "File not found from error packet");
+		currentPath = currentRelativePath.toAbsolutePath().toString();
+
+		Path filePath = Paths.get(currentPath, fileNameToWrite);
+
+		if (Files.exists(filePath)) {
+			byte[] errorPacket = createErrorPacket(6, "File already exits at server side");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
 			try {
+				System.out.println("going into try");
 				sendReceiveSocket.send(sendErrorPacket);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+			System.out.println("file exists on server already");
 			System.exit(0);
 		}
 
@@ -84,10 +91,6 @@ public class ClientConnectionThread implements Runnable {
 		ByteArrayOutputStream receivingBytes;
 		try {
 			receivingBytes = getFile();
-			Scanner input = new Scanner(System.in);
-			System.out.println("Enter the name of the file to be written to:");
-			fileNameToWrite = input.next();
-			input.close();
 
 			writeOutReceivedFile(receivingBytes, fileNameToWrite);
 			System.out.println("Writing to file is done.");
@@ -146,6 +149,15 @@ public class ClientConnectionThread implements Runnable {
 			outputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (OutOfMemoryError e) {
+			byte[] errorPacket = createErrorPacket(3, "File " + fileName + " ran out of memory on server side");
+			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
+			try {
+				sendReceiveSocket.send(sendErrorPacket);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
 		}
 	}
 
@@ -225,15 +237,16 @@ public class ClientConnectionThread implements Runnable {
 
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
-		// System.out.println("Current relative path is: " + currentPath);
 
-		try {
-			FilePermission fp = new FilePermission(fileName, "read");
-			AccessController.checkPermission(fp);
-		} catch (AccessControlException t) {
-			byte[] errorPacket = createErrorPacket(2, "File "+ fileName + " cannot be read on server side at path " + currentPath);
+		if (!isFileReadable(fileName)) {
+			byte[] errorPacket = createErrorPacket(2,
+					"File " + fileName + " not readable on server at path " + currentPath);
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
-			sendReceiveSocket.send(sendErrorPacket);
+			try {
+				sendReceiveSocket.send(sendErrorPacket);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 			System.exit(0);
 		}
 
@@ -241,7 +254,8 @@ public class ClientConnectionThread implements Runnable {
 			File file = new File(currentPath, fileName);
 			fis = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
-			byte[] errorPacket = createErrorPacket(2, "File " + fileName + " not found on server at path " + currentPath);
+			byte[] errorPacket = createErrorPacket(2,
+					"File " + fileName + " not found on server at path " + currentPath);
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -291,6 +305,17 @@ public class ClientConnectionThread implements Runnable {
 
 		fis.close();
 
+	}
+
+	private boolean isFileReadable(String fileName2) {
+		Path currentRelativePath = Paths.get("");
+		String currentPath = currentRelativePath.toAbsolutePath().toString();
+		Path filePath = Paths.get(currentPath, fileName2);
+
+		if ((new File(fileName2)).exists() && !Files.isReadable(filePath)) {
+			return false;
+		} else
+			return true;
 	}
 
 	private byte[] createDataPacket(int blockNumber, byte[] readDataFromFile) {

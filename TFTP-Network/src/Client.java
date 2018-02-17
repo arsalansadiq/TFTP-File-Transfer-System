@@ -1,10 +1,8 @@
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.AccessControlException;
-import java.security.AccessController;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client {
@@ -12,9 +10,9 @@ public class Client {
 	private DatagramSocket sendReceiveSocket = null;
 	private DatagramPacket sendPacket;
 	private DatagramPacket receivePacket;
-	private DatagramPacket receiveAckPacket;
 	private DatagramPacket sendDataPacket;
-	private DatagramPacket sendErrorPacket;
+
+	private Path filePath, filePathWrittenTo;
 
 	private final int hostPort = 23;
 
@@ -24,6 +22,7 @@ public class Client {
 	private String fileName, fileNameToWrite;
 
 	private FileInputStream fis = null;
+	String currentPath;
 
 	private void setup() throws IOException {
 
@@ -44,32 +43,32 @@ public class Client {
 		System.out.println("Enter the name of the file:");
 		fileName = input.next();
 
+		Path currentRelativePath = Paths.get("");
+		currentPath = currentRelativePath.toAbsolutePath().toString();
+
 		if (readWriteOPCode == 1) {
 			System.out.println("Enter the name of the file to be written to:");
 			fileNameToWrite = input.next();
+			filePathWrittenTo = Paths.get(currentPath, fileNameToWrite);
 		}
 
 		input.close();
 
-		Path currentRelativePath = Paths.get("");
-		String currentPath = currentRelativePath.toAbsolutePath().toString();
-		// System.out.println("Current relative path is: " + currentPath);
+		filePath = Paths.get(currentPath, fileName);
 
 		if (readWriteOPCode == 2) {
+			Path filePath = Paths.get(currentPath, fileName);
+			if (!Files.isReadable(filePath) && (new File(fileName)).exists()) {
+				System.out.println("File " + fileName + " access denied");
+				System.exit(0);
+			}
 			try {
 				fis = new FileInputStream(new File(currentPath, fileName));
 			} catch (FileNotFoundException e) {
-				System.out.println("File "+ fileName + " not found on client side at path " + currentPath);
+				System.out.println("File " + fileName + " not found on client side at path " + currentPath);
 				System.exit(0);
 			}
-			
-			try {
-				FilePermission fp = new FilePermission(fileName, "write");
-				AccessController.checkPermission(fp);
-			} catch (AccessControlException t) {
-				System.out.println("File "+ fileName + " is not writable on client side at path " + currentPath);
-				System.exit(0);
-			}
+
 		}
 
 		serverRequest = createServerRequest(readWriteOPCode, fileName, "netascii");
@@ -81,12 +80,31 @@ public class Client {
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
 			// receiving file from server
+			if (Files.exists(filePathWrittenTo)) {
+				System.out.println("File " + fileNameToWrite + " already exists on client side");
+				System.exit(0);
+			}
+
 			ByteArrayOutputStream receivingBytes = getFile();
 			writeOutReceivedFile(receivingBytes, fileNameToWrite);
 		} else if (readWriteOPCode == 2) {
-			byte buffer[] = new byte[4];
-			receiveAckPacket = new DatagramPacket(buffer, buffer.length);
-			sendReceiveSocket.receive(receiveAckPacket);
+
+			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
+			// opcode + 2 byte 0's
+
+			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
+					sendReceiveSocket.getLocalPort());
+
+			sendReceiveSocket.receive(receivePacket);
+
+			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+
+			if (requestCode[0] == 0 && requestCode[1] == 5) {
+				errorOccurred(receivePacket);
+			}
+
+			byte[] buffer = { holdReceivingArray[0], holdReceivingArray[1], holdReceivingArray[2],
+					holdReceivingArray[3] };
 
 			if (buffer[0] == 0 && buffer[1] == 4 && buffer[2] == 0 && buffer[3] == 0) {
 				System.out.println("Acknowledgment received for our write request, now beginning to write to server.");
@@ -98,22 +116,6 @@ public class Client {
 	}
 
 	private void beginWritingToServer() throws IOException {
-
-		// Path currentRelativePath = Paths.get("");
-		// String currentPath = currentRelativePath.toAbsolutePath().toString();
-		// System.out.println("Current relative path is: " + currentPath);
-
-		// try {
-		// fis = new FileInputStream(new File(currentPath, fileName));
-		// } catch (FileNotFoundException e) {
-		// byte[] errorPacket = createErrorPacket(2, "File not found from error
-		// packet");
-		// sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length,
-		// inetAddress, 23);
-		// sendReceiveSocket.send(sendErrorPacket);
-		// System.out.println("Sent error packet to server");
-		// System.exit(0);
-		// }
 
 		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
 
@@ -210,37 +212,6 @@ public class Client {
 
 	}
 
-	private byte[] createErrorPacket(int errorCode, String errorMessage) {
-		int posInErrorArray = 0;
-		byte zeroByte = 0;
-		byte errorOpCode = 05;
-		byte[] errorCodeAsBytes = new byte[2];
-
-		int errorPacketLength = 4 + errorMessage.length() + 1;
-
-		byte[] setupErrorPacket = new byte[errorPacketLength];
-		setupErrorPacket[posInErrorArray] = errorOpCode;
-		posInErrorArray++;
-		posInErrorArray++;
-
-		setupErrorPacket[posInErrorArray] = (byte) errorCode;
-
-		for (int i = 0; i < errorMessage.length(); i++) {
-			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
-			posInErrorArray++;
-		}
-
-		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
-		posInErrorArray++;
-		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
-		posInErrorArray++;
-
-		setupErrorPacket[posInErrorArray] = zeroByte;
-
-		return setupErrorPacket;
-
-	}
-
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 1;
@@ -301,11 +272,21 @@ public class Client {
 	}
 
 	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
+
+		if (!Files.isWritable(filePath)) {
+			System.out.println("Cannot write to file on client side.");
+			System.exit(0);
+		}
+
 		try {
 			OutputStream outputStream = new FileOutputStream(fileName);
 			byteArrayOutputStream.writeTo(outputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (OutOfMemoryError e) {
+			System.out.println("Out of memory on client side. Exiting.");
+
+			System.exit(0);
 		}
 	}
 
