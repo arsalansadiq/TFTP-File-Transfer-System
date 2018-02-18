@@ -129,8 +129,6 @@ public class ClientConnectionThread implements Runnable {
 		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
 		posInErrorArray++;
 
-		// setupErrorPacket[posInErrorArray] = (byte) errorCode;
-
 		for (int i = 0; i < errorMessage.length(); i++) {
 			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
 			posInErrorArray++;
@@ -179,8 +177,8 @@ public class ClientConnectionThread implements Runnable {
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
-			if (requestCode[1] == 5) { // 5 is opcode for error in packet
-				errorOccurred();
+			if (requestCode[0] == 0 && requestCode[1] == 5) {
+				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
 
@@ -206,8 +204,28 @@ public class ClientConnectionThread implements Runnable {
 		}
 	}
 
-	private void errorOccurred() {
-		System.out.println("ERROR HAS OCCURRED");
+	private void errorOccurred(DatagramPacket errorPacket) {
+		if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1) {
+			System.out.println("Error code 1: File not found. The error message is: ");
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2) {
+			System.out.println("Error code 2: Access violation. The error message is: ");
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 3) {
+			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
+			System.out.println("Error code 6: File already exists. The error message is: ");
+		}
+
+		int nameLength = 0;
+		for (int i = 4; errorPacket.getData()[i] != 0; i++) {
+			nameLength++;
+		}
+
+		byte[] packetData = new byte[nameLength];
+		System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
+		String errorMessage = new String(packetData);
+
+		System.out.println(errorMessage);
+
 	}
 
 	private void sendFirstWriteAcknowledgment() {
@@ -230,8 +248,6 @@ public class ClientConnectionThread implements Runnable {
 		// complete
 
 		fileName = getFileName(receivePacket);
-
-		System.out.println("Received file name is: " + fileName);
 
 		FileInputStream fis = null;
 
@@ -295,7 +311,7 @@ public class ClientConnectionThread implements Runnable {
 						"Acknowledgment from client, sending file for read request in progress with block number :"
 								+ checkBlock);
 				if (blockNumber != checkBlock) {
-					errorOccurred();
+					blockErrorOccurred();
 				}
 			}
 
@@ -306,6 +322,10 @@ public class ClientConnectionThread implements Runnable {
 		fis.close();
 		System.out.println("Done transfer. Exiting.");
 		System.exit(0);
+
+	}
+
+	private void blockErrorOccurred() {
 
 	}
 
