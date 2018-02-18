@@ -118,7 +118,7 @@ public class ClientConnectionThread implements Runnable {
 		int errorPacketLength = 4 + errorMessage.length() + 1;
 
 		byte[] setupErrorPacket = new byte[errorPacketLength];
-		
+
 		setupErrorPacket[posInErrorArray] = zeroByte;
 		posInErrorArray++;
 		setupErrorPacket[posInErrorArray] = five;
@@ -129,14 +129,12 @@ public class ClientConnectionThread implements Runnable {
 		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
 		posInErrorArray++;
 
-
-		//setupErrorPacket[posInErrorArray] = (byte) errorCode;
+		// setupErrorPacket[posInErrorArray] = (byte) errorCode;
 
 		for (int i = 0; i < errorMessage.length(); i++) {
 			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
 			posInErrorArray++;
 		}
-
 
 		setupErrorPacket[posInErrorArray] = zeroByte;
 

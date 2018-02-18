@@ -246,19 +246,16 @@ public class Client {
 	}
 
 	private void errorOccurred(DatagramPacket errorPacket) {
-		if(errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1){
+		if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1) {
 			System.out.println("Error code 1: File not found. The error message is: ");
-		}
-		else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2){
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2) {
 			System.out.println("Error code 2: Access violation. The error message is: ");
-		}
-		else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 3){
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 3) {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
-		}
-		else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6){
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
 		}
-		
+
 		int nameLength = 0;
 		for (int i = 4; errorPacket.getData()[i] != 0; i++) {
 			nameLength++;
