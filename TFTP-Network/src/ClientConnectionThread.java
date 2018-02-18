@@ -74,7 +74,7 @@ public class ClientConnectionThread implements Runnable {
 		Path filePath = Paths.get(currentPath, fileNameToWrite);
 
 		if (Files.exists(filePath)) {
-			byte[] errorPacket = createErrorPacket(6, "File already exists at server side");
+			byte[] errorPacket = createErrorPacket(6, "File " + fileNameToWrite + " already exists at server side.");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -90,9 +90,9 @@ public class ClientConnectionThread implements Runnable {
 		ByteArrayOutputStream receivingBytes;
 		try {
 			receivingBytes = getFile();
-
 			writeOutReceivedFile(receivingBytes, fileNameToWrite);
 			System.out.println("Writing to file is done.");
+			System.exit(0);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -118,22 +118,25 @@ public class ClientConnectionThread implements Runnable {
 		int errorPacketLength = 4 + errorMessage.length() + 1;
 
 		byte[] setupErrorPacket = new byte[errorPacketLength];
+		
 		setupErrorPacket[posInErrorArray] = zeroByte;
 		posInErrorArray++;
 		setupErrorPacket[posInErrorArray] = five;
 		posInErrorArray++;
 
-		setupErrorPacket[posInErrorArray] = (byte) errorCode;
+		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
+		posInErrorArray++;
+
+
+		//setupErrorPacket[posInErrorArray] = (byte) errorCode;
 
 		for (int i = 0; i < errorMessage.length(); i++) {
 			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
 			posInErrorArray++;
 		}
 
-		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
-		posInErrorArray++;
-		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
-		posInErrorArray++;
 
 		setupErrorPacket[posInErrorArray] = zeroByte;
 
@@ -253,7 +256,7 @@ public class ClientConnectionThread implements Runnable {
 			File file = new File(currentPath, fileName);
 			fis = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
-			byte[] errorPacket = createErrorPacket(2,
+			byte[] errorPacket = createErrorPacket(1,
 					"File " + fileName + " not found on server at path " + currentPath);
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
@@ -294,7 +297,7 @@ public class ClientConnectionThread implements Runnable {
 						"Acknowledgment from client, sending file for read request in progress with block number :"
 								+ checkBlock);
 				if (blockNumber != checkBlock) {
-					// errorOccurred();
+					errorOccurred();
 				}
 			}
 
@@ -303,6 +306,8 @@ public class ClientConnectionThread implements Runnable {
 		}
 
 		fis.close();
+		System.out.println("Done transfer. Exiting.");
+		System.exit(0);
 
 	}
 

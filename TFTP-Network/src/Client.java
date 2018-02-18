@@ -59,7 +59,7 @@ public class Client {
 		if (readWriteOPCode == 2) {
 			Path filePath = Paths.get(currentPath, fileName);
 			if (!Files.isReadable(filePath) && (new File(fileName)).exists()) {
-				System.out.println("File " + fileName + " access denied");
+				System.out.println("File " + fileName + " is not readable.");
 				System.exit(0);
 			}
 			try {
@@ -81,7 +81,7 @@ public class Client {
 		if (readWriteOPCode == 1) {
 			// receiving file from server
 			if (Files.exists(filePathWrittenTo)) {
-				System.out.println("File " + fileNameToWrite + " already exists on client side");
+				System.out.println("File " + fileNameToWrite + " already exists on client side.");
 				System.exit(0);
 			}
 
@@ -246,13 +246,26 @@ public class Client {
 	}
 
 	private void errorOccurred(DatagramPacket errorPacket) {
+		if(errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1){
+			System.out.println("Error code 1: File not found. The error message is: ");
+		}
+		else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2){
+			System.out.println("Error code 2: Access violation. The error message is: ");
+		}
+		else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 3){
+			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
+		}
+		else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6){
+			System.out.println("Error code 6: File already exists. The error message is: ");
+		}
+		
 		int nameLength = 0;
-		for (int i = 2; errorPacket.getData()[i] != 0; i++) {
+		for (int i = 4; errorPacket.getData()[i] != 0; i++) {
 			nameLength++;
 		}
 
 		byte[] packetData = new byte[nameLength];
-		System.arraycopy(errorPacket.getData(), 2, packetData, 0, nameLength - 1);
+		System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
 		String errorMessage = new String(packetData);
 
 		System.out.println(errorMessage);
