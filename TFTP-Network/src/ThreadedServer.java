@@ -30,7 +30,7 @@ public class ThreadedServer {
 				receiveSocket.receive(receivePacket); // wait for a packet
 				System.out.println("Server: packet received");
 			} catch (IOException e) { // throws exception
-				// e.printStackTrace();
+				e.printStackTrace();
 				System.out.println("SERVER TIMED OUT!");
 				System.exit(0);
 			}

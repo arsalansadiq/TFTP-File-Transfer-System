@@ -1,6 +1,6 @@
 # TFTP-File-Transfer-System
-## SYSC 3303 - Project Iteration 2
-### Version: 2.0
+## SYSC 3303 - Project Iteration 1
+### Version: 1.0
 ### Author(s) 
  * Harshan Anton
  * Aly Khan Barolia
@@ -39,6 +39,7 @@ dedicated to serving that client. There will only be one server, with a
 thread for each client connecting 
 
 ### Execution/Termination Instructions
+Begin by placing a file to use for transfers in the root of the program directory. In our testing we used the file "sample.txt". Place any file in the same folder as sample.txt you wish to use for transfers.
  * *1) run the ThreadedServer.java class as java applications*
  * *2) run the IntermediateHost.java class as java applications*
  * *3) run the client.java class as java applications*
@@ -47,15 +48,4 @@ Then the user uses the client console window.
 In this window the user should be prompted with "(R)EAD or (W)RITE"
 user types r for read or w for write
 
-Then the user will be asked to enter the name of the file to be accessed, where the user types in the filename (including extension) and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
-
-### Breakdown of responsibilities of each team member
-
- * Harshan's Responsibility:
- 	* sss
- * Aly Khan's Responsibility:
- 	* sss
- * Arsalan's Responsibility:
- 	* sss
- * Jeff's Responsibility:
- 	* sss
+Then the user will be asked to enter the name of the file to be accessed, where the user types in the filename (including extension, in our case we used "sample.txt") and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
