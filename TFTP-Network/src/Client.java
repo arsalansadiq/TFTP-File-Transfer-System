@@ -46,27 +46,28 @@ public class Client {
 		Path currentRelativePath = Paths.get("");
 		currentPath = currentRelativePath.toAbsolutePath().toString();
 
-//		if (readWriteOPCode == 1) {
-//			System.out.println("Enter the name of the file to be written to:");
-//			fileNameToWrite = input.next();
-//			filePathWrittenTo = Paths.get(currentPath, fileNameToWrite);
-//		}
+		// if (readWriteOPCode == 1) {
+		// System.out.println("Enter the name of the file to be written to:");
+		// fileNameToWrite = input.next();
+		// filePathWrittenTo = Paths.get(currentPath, fileNameToWrite);
+		// }
 
 		input.close();
-		filePathWrittenTo = Paths.get(currentPath+"\\Client", fileName);
+		filePathWrittenTo = Paths.get(currentPath + "\\Client", fileName);
 
-		//filePath = Paths.get(currentPath, fileName);
+		// filePath = Paths.get(currentPath, fileName);
 
 		if (readWriteOPCode == 2) {
-			Path filePath = Paths.get(currentPath +"\\Client", fileName);
-			if (!Files.isReadable(filePath) && (new File(currentPath +"\\Client", fileName).exists())) {
+			Path filePath = Paths.get(currentPath + "\\Client", fileName);
+			if (!Files.isReadable(filePath) && (new File(currentPath + "\\Client", fileName).exists())) {
 				System.out.println("File " + fileName + " is not readable.");
 				System.exit(0);
 			}
 			try {
-				fis = new FileInputStream(new File(currentPath +"\\Client", fileName));
+				fis = new FileInputStream(new File(currentPath + "\\Client", fileName));
 			} catch (FileNotFoundException e) {
-				System.out.println("File " + fileName + " not found on client side at path " + currentPath+"\\Client");
+				System.out
+						.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
 				System.exit(0);
 			}
 
@@ -267,6 +268,7 @@ public class Client {
 		String errorMessage = new String(packetData);
 
 		System.out.println(errorMessage);
+		System.exit(0);
 
 	}
 
@@ -283,15 +285,15 @@ public class Client {
 	}
 
 	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
-		filePath = Paths.get(currentPath+"\\Client", fileName);
+		filePath = Paths.get(currentPath + "\\Client", fileName);
 
-//		if (!Files.isWritable(filePath)) {
-//			System.out.println("Cannot write to file on client side.");
-//			System.exit(0);
-//		}
+		// if (!Files.isWritable(filePath)) {
+		// System.out.println("Cannot write to file on client side.");
+		// System.exit(0);
+		// }
 
-		File file = new File(currentPath+"\\Client", fileName);
-		
+		File file = new File(currentPath + "\\Client", fileName);
+
 		try {
 			OutputStream outputStream = new FileOutputStream(file);
 			byteArrayOutputStream.writeTo(outputStream);

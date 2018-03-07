@@ -64,15 +64,15 @@ public class ClientConnectionThread implements Runnable {
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 
-//		Scanner input = new Scanner(System.in);
-//		System.out.println("Enter the name of the file to be written to:");
-//		fileNameToWrite = input.next();
-//		input.close();
+		// Scanner input = new Scanner(System.in);
+		// System.out.println("Enter the name of the file to be written to:");
+		// fileNameToWrite = input.next();
+		// input.close();
 
 		currentPath = currentRelativePath.toAbsolutePath().toString();
 		fileName = getFileName(receivePacket);
 
-		Path filePath = Paths.get(currentPath+"\\Server", fileName);
+		Path filePath = Paths.get(currentPath + "\\Server", fileName);
 
 		if (Files.exists(filePath)) {
 			byte[] errorPacket = createErrorPacket(6, "File " + fileName + " already exists at server side.");
@@ -142,13 +142,13 @@ public class ClientConnectionThread implements Runnable {
 	}
 
 	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileNameTowrite) {
-		
-		//filePath = Paths.get(currentPath+"\\Server", fileName);
+
+		// filePath = Paths.get(currentPath+"\\Server", fileName);
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
-		
-		File file = new File(currentPath+"\\Server", fileNameTowrite);
-		
+
+		File file = new File(currentPath + "\\Server", fileNameTowrite);
+
 		try {
 			OutputStream outputStream = new FileOutputStream(file);
 			byteArrayOutputStream.writeTo(outputStream);
@@ -260,11 +260,11 @@ public class ClientConnectionThread implements Runnable {
 		FileInputStream fis = null;
 
 		Path currentRelativePath = Paths.get("");
-		String currentPath = currentRelativePath.toAbsolutePath().toString()+"\\Server";
+		String currentPath = currentRelativePath.toAbsolutePath().toString() + "\\Server";
 
-		if (!isFileReadable("\\Server"+fileName)) {
+		if (!isFileReadable(fileName)) {
 			byte[] errorPacket = createErrorPacket(2,
-					"File " + fileName + " not readable on server at path " + currentPath+"\\Server");
+					"File " + fileName + " not readable on server at path " + currentPath + "\\Server");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -339,10 +339,10 @@ public class ClientConnectionThread implements Runnable {
 
 	private boolean isFileReadable(String fileName2) {
 		Path currentRelativePath = Paths.get("");
-		String currentPath = currentRelativePath.toAbsolutePath().toString();
-		Path filePath = Paths.get(currentPath, fileName2);
+		String currentPath2 = currentRelativePath.toAbsolutePath().toString() + "\\Server";
+		Path filePath = Paths.get(currentPath2, fileName2);
 
-		if ((new File(fileName2)).exists() && !Files.isReadable(filePath)) {
+		if ((new File(currentPath2, fileName2)).exists() && !Files.isReadable(filePath)) {
 			return false;
 		} else
 			return true;
