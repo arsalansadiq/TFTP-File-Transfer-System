@@ -59,14 +59,14 @@ public class Client {
 
 		if (readWriteOPCode == 2) {
 			Path filePath = Paths.get(currentPath +"\\Client", fileName);
-			if (!Files.isReadable(filePath) && (new File(fileName)).exists()) {
+			if (!Files.isReadable(filePath) && (new File(currentPath +"\\Client", fileName).exists())) {
 				System.out.println("File " + fileName + " is not readable.");
 				System.exit(0);
 			}
 			try {
 				fis = new FileInputStream(new File(currentPath +"\\Client", fileName));
 			} catch (FileNotFoundException e) {
-				System.out.println("File " + fileName + " not found on client side at path " + currentPath);
+				System.out.println("File " + fileName + " not found on client side at path " + currentPath+"\\Client");
 				System.exit(0);
 			}
 

@@ -64,17 +64,18 @@ public class ClientConnectionThread implements Runnable {
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 
-		Scanner input = new Scanner(System.in);
-		System.out.println("Enter the name of the file to be written to:");
-		fileNameToWrite = input.next();
-		input.close();
+//		Scanner input = new Scanner(System.in);
+//		System.out.println("Enter the name of the file to be written to:");
+//		fileNameToWrite = input.next();
+//		input.close();
 
 		currentPath = currentRelativePath.toAbsolutePath().toString();
+		fileName = getFileName(receivePacket);
 
-		Path filePath = Paths.get(currentPath, fileNameToWrite);
+		Path filePath = Paths.get(currentPath+"\\Server", fileName);
 
 		if (Files.exists(filePath)) {
-			byte[] errorPacket = createErrorPacket(6, "File " + fileNameToWrite + " already exists at server side.");
+			byte[] errorPacket = createErrorPacket(6, "File " + fileName + " already exists at server side.");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -90,7 +91,7 @@ public class ClientConnectionThread implements Runnable {
 		ByteArrayOutputStream receivingBytes;
 		try {
 			receivingBytes = getFile();
-			writeOutReceivedFile(receivingBytes, fileNameToWrite);
+			writeOutReceivedFile(receivingBytes, fileName);
 			System.out.println("Writing to file is done.");
 			System.exit(0);
 		} catch (IOException e) {
@@ -140,15 +141,22 @@ public class ClientConnectionThread implements Runnable {
 
 	}
 
-	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
+	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileNameTowrite) {
+		
+		//filePath = Paths.get(currentPath+"\\Server", fileName);
+		Path currentRelativePath = Paths.get("");
+		String currentPath = currentRelativePath.toAbsolutePath().toString();
+		
+		File file = new File(currentPath+"\\Server", fileNameTowrite);
+		
 		try {
-			OutputStream outputStream = new FileOutputStream(fileName);
+			OutputStream outputStream = new FileOutputStream(file);
 			byteArrayOutputStream.writeTo(outputStream);
 			outputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (OutOfMemoryError e) {
-			byte[] errorPacket = createErrorPacket(3, "File " + fileName + " ran out of memory on server side");
+			byte[] errorPacket = createErrorPacket(3, "File " + fileNameTowrite + " ran out of memory on server side");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
