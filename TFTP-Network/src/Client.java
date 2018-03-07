@@ -46,24 +46,25 @@ public class Client {
 		Path currentRelativePath = Paths.get("");
 		currentPath = currentRelativePath.toAbsolutePath().toString();
 
-		if (readWriteOPCode == 1) {
-			System.out.println("Enter the name of the file to be written to:");
-			fileNameToWrite = input.next();
-			filePathWrittenTo = Paths.get(currentPath, fileNameToWrite);
-		}
+//		if (readWriteOPCode == 1) {
+//			System.out.println("Enter the name of the file to be written to:");
+//			fileNameToWrite = input.next();
+//			filePathWrittenTo = Paths.get(currentPath, fileNameToWrite);
+//		}
 
 		input.close();
+		filePathWrittenTo = Paths.get(currentPath+"\\Client", fileName);
 
-		filePath = Paths.get(currentPath, fileName);
+		//filePath = Paths.get(currentPath, fileName);
 
 		if (readWriteOPCode == 2) {
-			Path filePath = Paths.get(currentPath, fileName);
+			Path filePath = Paths.get(currentPath +"\\Client", fileName);
 			if (!Files.isReadable(filePath) && (new File(fileName)).exists()) {
 				System.out.println("File " + fileName + " is not readable.");
 				System.exit(0);
 			}
 			try {
-				fis = new FileInputStream(new File(currentPath, fileName));
+				fis = new FileInputStream(new File(currentPath +"\\Client", fileName));
 			} catch (FileNotFoundException e) {
 				System.out.println("File " + fileName + " not found on client side at path " + currentPath);
 				System.exit(0);
@@ -81,12 +82,12 @@ public class Client {
 		if (readWriteOPCode == 1) {
 			// receiving file from server
 			if (Files.exists(filePathWrittenTo)) {
-				System.out.println("File " + fileNameToWrite + " already exists on client side.");
+				System.out.println("File " + fileName + " already exists on client side.");
 				System.exit(0);
 			}
 
 			ByteArrayOutputStream receivingBytes = getFile();
-			writeOutReceivedFile(receivingBytes, fileNameToWrite);
+			writeOutReceivedFile(receivingBytes, fileName);
 		} else if (readWriteOPCode == 2) {
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -282,14 +283,17 @@ public class Client {
 	}
 
 	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileName) {
+		filePath = Paths.get(currentPath+"\\Client", fileName);
 
-		if (!Files.isWritable(filePath)) {
-			System.out.println("Cannot write to file on client side.");
-			System.exit(0);
-		}
+//		if (!Files.isWritable(filePath)) {
+//			System.out.println("Cannot write to file on client side.");
+//			System.exit(0);
+//		}
 
+		File file = new File(currentPath+"\\Client", fileName);
+		
 		try {
-			OutputStream outputStream = new FileOutputStream(fileName);
+			OutputStream outputStream = new FileOutputStream(file);
 			byteArrayOutputStream.writeTo(outputStream);
 		} catch (IOException e) {
 			e.printStackTrace();

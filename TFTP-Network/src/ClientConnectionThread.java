@@ -252,11 +252,11 @@ public class ClientConnectionThread implements Runnable {
 		FileInputStream fis = null;
 
 		Path currentRelativePath = Paths.get("");
-		String currentPath = currentRelativePath.toAbsolutePath().toString();
+		String currentPath = currentRelativePath.toAbsolutePath().toString()+"\\Server";
 
-		if (!isFileReadable(fileName)) {
+		if (!isFileReadable("\\Server"+fileName)) {
 			byte[] errorPacket = createErrorPacket(2,
-					"File " + fileName + " not readable on server at path " + currentPath);
+					"File " + fileName + " not readable on server at path " + currentPath+"\\Server");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
