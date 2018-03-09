@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 public class IntermediateHost {
 	private DatagramSocket sendReceiveSocket = null;
@@ -18,6 +19,9 @@ public class IntermediateHost {
 	}
 
 	public void run() throws IOException {
+
+		operationSetup();
+
 		byte data[] = new byte[516];
 		sendReceivePacket = new DatagramPacket(data, data.length);
 
@@ -53,6 +57,39 @@ public class IntermediateHost {
 			sendReceivePacket.setPort(clientPort);
 			sendReceiveSocket.send(sendReceivePacket);
 		}
+	}
+
+	private void operationSetup() {
+		Scanner input = new Scanner(System.in);
+		
+		System.out.println(
+				"Choose an operation. 0: normal operation, 1: lose a packet, 2: delay a packet, 3: duplicate a packet.");
+		int chosenOperation = input.nextInt();
+
+		int packetTypeToLose;
+		int packetTypeToDuplicate;
+
+		switch (chosenOperation) {
+		case 1:
+			System.out.println("Do you want to lose a 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
+			packetTypeToLose = input.nextInt();
+			if (packetTypeToLose == 2 || packetTypeToLose == 3) {
+				System.out.println("Which number DATA or ACK packet should be lost during transfer: ");
+				int packetNum = input.nextInt();
+			}
+			break;
+		case 2:
+			System.out.println("How long should the delay be in seconds: ");
+			int delayTime = input.nextInt();
+			break;
+		case 3:
+			System.out.println("Do you want to duplicate a 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
+			packetTypeToDuplicate = input.nextInt();
+			break;
+		}
+
+		input.close();
+
 	}
 
 	public static void main(String[] args) throws IOException {
