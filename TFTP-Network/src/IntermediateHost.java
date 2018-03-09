@@ -68,6 +68,8 @@ public class IntermediateHost {
 
 		int packetTypeToLose;
 		int packetTypeToDuplicate;
+		int packetTypeToDelay;
+		int packetNum;
 
 		switch (chosenOperation) {
 		case 1:
@@ -75,10 +77,14 @@ public class IntermediateHost {
 			packetTypeToLose = input.nextInt();
 			if (packetTypeToLose == 2 || packetTypeToLose == 3) {
 				System.out.println("Which number DATA or ACK packet should be lost during transfer: ");
-				int packetNum = input.nextInt();
+				packetNum = input.nextInt();
 			}
 			break;
 		case 2:
+			System.out.println("Which packet should be delayed: 0: DATA or 1: ACK");
+			packetTypeToDelay = input.nextInt();
+			System.out.println("Which number DATA or ACK packet should be delayed during transfer: ");
+			packetNum = input.nextInt();
 			System.out.println("How long should the delay be in seconds: ");
 			int delayTime = input.nextInt();
 			break;
