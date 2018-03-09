@@ -81,7 +81,7 @@ public class IntermediateHost {
 			}
 			break;
 		case 2:
-			System.out.println("Which packet should be delayed: 0: DATA or 1: ACK");
+			System.out.println("Which packet should be delayed: 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
 			packetTypeToDelay = input.nextInt();
 			System.out.println("Which number DATA or ACK packet should be delayed during transfer: ");
 			packetNum = input.nextInt();
