@@ -7,6 +7,12 @@ public class IntermediateHost {
 	private DatagramPacket sendReceivePacket;
 	private final int serverPort = 69;
 	private int clientPort, threadPort = 0;
+	
+	int packetTypeToLose;
+	int packetTypeToDuplicate;
+	int packetTypeToDelay;
+	int packetNum;
+	int delayTime;
 
 	public IntermediateHost() {
 
@@ -66,11 +72,6 @@ public class IntermediateHost {
 				"Choose an operation. 0: normal operation, 1: lose a packet, 2: delay a packet, 3: duplicate a packet.");
 		int chosenOperation = input.nextInt();
 
-		int packetTypeToLose;
-		int packetTypeToDuplicate;
-		int packetTypeToDelay;
-		int packetNum;
-
 		switch (chosenOperation) {
 		case 1:
 			System.out.println("Do you want to lose a 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
@@ -83,14 +84,20 @@ public class IntermediateHost {
 		case 2:
 			System.out.println("Which packet should be delayed: 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
 			packetTypeToDelay = input.nextInt();
+			if (packetTypeToDelay == 2 || packetTypeToDelay == 3) {
 			System.out.println("Which number DATA or ACK packet should be delayed during transfer: ");
 			packetNum = input.nextInt();
+			}
 			System.out.println("How long should the delay be in seconds: ");
-			int delayTime = input.nextInt();
+			delayTime = input.nextInt();
 			break;
 		case 3:
 			System.out.println("Do you want to duplicate a 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
 			packetTypeToDuplicate = input.nextInt();
+			if (packetTypeToDuplicate == 2 || packetTypeToDuplicate == 3) {
+			System.out.println("Which number DATA or ACK packet should be duplicated during transfer: ");
+			packetNum = input.nextInt();
+			}
 			break;
 		}
 
