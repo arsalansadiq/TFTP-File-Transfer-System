@@ -77,7 +77,7 @@ public class Client {
 
 		sendPacket = new DatagramPacket(serverRequest, serverRequest.length, inetAddress, hostPort);
 
-		sendReceiveSocket.send(sendPacket);
+		sendReceiveSocket.send(sendPacket);//need to setup a timeout, if it timesout, resend packet
 
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
@@ -88,7 +88,7 @@ public class Client {
 			}
 
 			ByteArrayOutputStream receivingBytes = getFile();
-			writeOutReceivedFile(receivingBytes, fileName);
+			writeOutReceivedFile(receivingBytes, fileName);//rrq
 		} else if (readWriteOPCode == 2) {
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -97,7 +97,7 @@ public class Client {
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
 
-			sendReceiveSocket.receive(receivePacket);
+			sendReceiveSocket.receive(receivePacket);//
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
@@ -227,8 +227,8 @@ public class Client {
 
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
-
-			sendReceiveSocket.receive(receivePacket);
+			// receiveSocket.setSoTimeout(30000);
+			sendReceiveSocket.receive(receivePacket);//if this timesout resend the previous packet sent...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
