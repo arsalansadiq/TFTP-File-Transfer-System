@@ -157,27 +157,10 @@ public class IntermediateHost {
 		System.out.println(
 				"Choose an operation. 0: normal operation, 1: lose a packet, 2: delay a packet, 3: duplicate a packet.");
 		int chosenOperation = input.nextInt();
-		System.out.println("Which type of packet would you like to use the error simulation with?\n	"
-				+ " 1:rrq, 2: wrq, 3: data packet, 4: ack packet");
-		int packetType = input.nextInt();
-		if (packetType == 1)
-			rrqSim = true;
-		else if (packetType == 2)
-			wrqSim = true;
-		else if (packetType == 3)
-			dataSim = true;
-		else if (packetType == 4)
-			ackSim = true;
-		if (chosenOperation == 1)
-			lostSim = true;
-		if (chosenOperation == 2)
-			delaySim = true;
-		if (chosenOperation == 3)
-			duplicateSim = true;
 
-		int packetTypeToLose;
-		int packetTypeToDuplicate;
-		int packetTypeToDelay;
+		int packetTypeToLose = -1;
+		int packetTypeToDuplicate = -1;
+		int packetTypeToDelay = -1;
 
 		switch (chosenOperation) {
 		case 1:
@@ -209,6 +192,21 @@ public class IntermediateHost {
 		}
 
 		input.close();
+
+		if (packetTypeToLose == 0 || packetTypeToDelay == 0 || packetTypeToDuplicate == 0)
+			rrqSim = true;
+		else if (packetTypeToLose == 1 || packetTypeToDelay == 1 || packetTypeToDuplicate == 1)
+			wrqSim = true;
+		else if (packetTypeToLose == 2 || packetTypeToDelay == 2 || packetTypeToDuplicate == 2)
+			dataSim = true;
+		else if (packetTypeToLose == 3 || packetTypeToDelay == 3 || packetTypeToDuplicate == 3)
+			ackSim = true;
+		if (chosenOperation == 1)
+			lostSim = true;
+		if (chosenOperation == 2)
+			delaySim = true;
+		if (chosenOperation == 3)
+			duplicateSim = true;
 
 	}
 
