@@ -78,7 +78,7 @@ public class Client {
 
 		sendPacket = new DatagramPacket(serverRequest, serverRequest.length, inetAddress, hostPort);
 
-		sendReceiveSocket.send(sendPacket);//need to setup a timeout, if it timesout, resend packet
+		sendReceiveSocket.send(sendPacket);// need to setup a timeout, if it timesout, resend packet
 
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
@@ -89,7 +89,7 @@ public class Client {
 			}
 
 			ByteArrayOutputStream receivingBytes = getFile();
-			writeOutReceivedFile(receivingBytes, fileName);//rrq
+			writeOutReceivedFile(receivingBytes, fileName);// rrq
 		} else if (readWriteOPCode == 2) {
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -218,11 +218,11 @@ public class Client {
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 1;
-		int blockCount = 1;
+		int blockCount = 0;
 
 		do {
-			
-			//blockCount++;
+
+			blockCount++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
 												// opcode + 2 byte 0's
@@ -240,14 +240,17 @@ public class Client {
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
 				blockNum = blockNumber[0] + blockNumber[1];
 				System.out.println("Packet #: " + blockNum);
-//				if (blockNum < blockCount) {
-//					System.out.println("Duplication has occurred. REceived block number: " + blockNum + " but expected: "+ blockCount );
-//				}
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
-				acknowledgeToHost(blockNumber);
+				if (blockNum == blockCount) {
+					acknowledgeToHost(blockNumber);
+				} else {
+					System.out.println("Duplication occurred. Expected block number: " + blockCount
+							+ " received block number: " + blockNum);
+					blockCount--;
+				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));

@@ -170,10 +170,11 @@ public class ClientConnectionThread implements Runnable {
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 1;
+		int blockCount = 1;
 
 		do {
 			System.out.println("Packet #: " + blockNum);
-			//blockNum++;
+			blockCount++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
 												// opcode + 2 byte 0's
@@ -191,12 +192,17 @@ public class ClientConnectionThread implements Runnable {
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
 				blockNum = blockNumber[0] + blockNumber[1];
 				
-				//if (blockNum)
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
-				acknowledgeToHost(blockNumber);
+				if (blockNum == blockCount) {
+					acknowledgeToHost(blockNumber);
+				}
+				else {
+					System.out.println("Duplication occurred. Expected block number: " + blockCount + " received block number: " + blockNum);
+				}
+				
 			}
 
 		} while (!(receivePacket.getLength() < 512));

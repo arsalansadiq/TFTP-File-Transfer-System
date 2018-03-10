@@ -148,7 +148,7 @@ public class IntermediateHost {
 	 * @throws IOException
 	 */
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(delayTime);
 		sendReceiveSocket.send(packet);
 	}
 
@@ -189,6 +189,8 @@ public class IntermediateHost {
 				System.out.println("Which number DATA or ACK packet should be duplicated during transfer: ");
 				packetNum = input.nextInt();
 			}
+			System.out.println("How long should the delay be in seconds: ");
+			delayTime = input.nextInt();
 			break;
 		}
 
