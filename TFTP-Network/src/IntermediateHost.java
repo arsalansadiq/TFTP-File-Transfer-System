@@ -44,14 +44,15 @@ public class IntermediateHost {
 
 		System.out.println("Intermediate host: waiting for a packet from client");
 		sendReceiveSocket.receive(sendReceivePacket);
-		sim(sendReceivePacket);
+		
 		clientPort = sendReceivePacket.getPort();
 
 		sendReceivePacket.setPort(serverPort);
 		// send request to server
 		System.out.println("Intermediate host: sending packet to server");
-		sendReceiveSocket.send(sendReceivePacket);
 		sim(sendReceivePacket);
+		sendReceiveSocket.send(sendReceivePacket);
+		//sim(sendReceivePacket);
 
 		// waiting for response from server
 		System.out.println("Intermediate host: waiting for a packet from thread");
@@ -123,7 +124,7 @@ public class IntermediateHost {
 	public boolean blockNumMatch(DatagramPacket packet) {
 		byte data[] = packet.getData();
 		byte pNum[] = intToBytes(packetNum);
-		if (data[1] == pNum[0] && data[2] == pNum[1])
+		if (data[3] == pNum[0] && data[2] == pNum[1])
 			return true;
 		return false;
 	}
