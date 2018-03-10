@@ -107,7 +107,8 @@ public class IntermediateHost {
 				if (blockNumMatch(packet))
 					duplicatePacketErrorSim(packet);
 			if (delaySim)
-				delayPacketErrorSim(packet);
+				if (blockNumMatch(packet))
+					delayPacketErrorSim(packet);
 			if (lostSim)
 				if (blockNumMatch(packet))
 					lostPacketErrorSim(packet);
@@ -147,7 +148,7 @@ public class IntermediateHost {
 	 * @throws IOException
 	 */
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
-		TimeUnit.SECONDS.sleep(delayTime);
+		TimeUnit.SECONDS.sleep(1);
 		sendReceiveSocket.send(packet);
 	}
 
