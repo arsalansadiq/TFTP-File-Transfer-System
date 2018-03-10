@@ -74,7 +74,6 @@ public class IntermediateHost {
 			sendReceiveSocket.receive(sendReceivePacket);
 			sim(sendReceivePacket);
 
-			delayPacketErrorSim(sendReceivePacket);
 			sendReceivePacket.setPort(threadPort);
 			System.out.println("Intermediate host: sending packet to thread");
 
@@ -140,13 +139,7 @@ public class IntermediateHost {
 		// }
 	}
 
-	/**
-	 * duplicatePacketErrorSim
-	 * 
-	 * @param packet
-	 * @throws InterruptedException
-	 * @throws IOException
-	 */
+
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
 		TimeUnit.SECONDS.sleep(delayTime);
 		sendReceiveSocket.send(packet);

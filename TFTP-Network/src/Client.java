@@ -233,6 +233,7 @@ public class Client {
 			sendReceiveSocket.receive(receivePacket);
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+			//byte[] test = { 0, 5 };
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
@@ -247,7 +248,8 @@ public class Client {
 				if (blockNum == blockCount) {
 					acknowledgeToHost(blockNumber);
 				} else {
-					System.out.println("Duplication occurred. Expected block number: " + blockCount
+					//acknowledgeToHost(test);
+					System.out.println("Expected block number: " + blockCount
 							+ " received block number: " + blockNum);
 					blockCount--;
 				}
