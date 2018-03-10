@@ -26,7 +26,7 @@ public class ThreadedServer {
 
 		while (true) {
 			receivePacket = new DatagramPacket(data, data.length);
-			
+
 			try {
 				System.out.println("Server: waiting to receive a packet");
 				// receiveSocket.setSoTimeout(30000);
@@ -47,8 +47,8 @@ public class ThreadedServer {
 				System.out.println("Server: Duplicate read or request received. Discarding...");
 			}
 			else {
-			Runnable newClient = new ClientConnectionThread(receivePacket);
-			new Thread(newClient).start();
+				Runnable newClient = new ClientConnectionThread(receivePacket);
+				new Thread(newClient).start();
 			}
 			receiveOld = receive;
 		}

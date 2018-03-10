@@ -141,8 +141,8 @@ public class IntermediateHost {
 
 
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
-		TimeUnit.SECONDS.sleep(delayTime);
-		sendReceiveSocket.send(packet);
+		Runnable duplicate = new DuplicatePacket(packet, delayTime);
+		new Thread(duplicate).start();
 	}
 
 	private void operationSetup() {
