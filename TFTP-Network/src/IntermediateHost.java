@@ -122,11 +122,10 @@ public class IntermediateHost {
 	}
 
 	public boolean blockNumMatch(DatagramPacket packet) {
-		byte data[] = packet.getData();
-		byte pNum[] = intToBytes(packetNum);
-		if (data[3] == pNum[0] && data[2] == pNum[1])
-			return true;
-		return false;
+		byte[] blockNumber = { packet.getData()[2], packet.getData()[3] };
+		int blockNum = blockNumber[0] + blockNumber[1];
+			
+		return blockNum == packetNum;
 	}
 
 	public void delayPacketErrorSim(DatagramPacket packet) throws InterruptedException {

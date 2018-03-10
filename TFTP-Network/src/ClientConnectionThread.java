@@ -173,7 +173,7 @@ public class ClientConnectionThread implements Runnable {
 
 		do {
 			System.out.println("Packet #: " + blockNum);
-			blockNum++;
+			//blockNum++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
 												// opcode + 2 byte 0's
@@ -189,6 +189,9 @@ public class ClientConnectionThread implements Runnable {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				blockNum = blockNumber[0] + blockNumber[1];
+				
+				//if (blockNum)
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);

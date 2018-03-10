@@ -3,6 +3,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client {
@@ -217,18 +218,19 @@ public class Client {
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 1;
+		int blockCount = 1;
 
 		do {
-			System.out.println("Packet #: " + blockNum);
-			blockNum++;
+			
+			//blockCount++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
 												// opcode + 2 byte 0's
 
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
-			// receiveSocket.setSoTimeout(30000);
-			sendReceiveSocket.receive(receivePacket);//if this timesout resend the previous packet sent...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+			sendReceiveSocket.receive(receivePacket);
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
@@ -236,6 +238,11 @@ public class Client {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				blockNum = blockNumber[0] + blockNumber[1];
+				System.out.println("Packet #: " + blockNum);
+//				if (blockNum < blockCount) {
+//					System.out.println("Duplication has occurred. REceived block number: " + blockNum + " but expected: "+ blockCount );
+//				}
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
