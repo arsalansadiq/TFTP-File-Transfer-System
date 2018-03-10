@@ -1,2 +1,4 @@
-/IntermediateHost.class
 /Client.class
+/ClientConnectionThread.class
+/IntermediateHost.class
+/ThreadedServer.class
