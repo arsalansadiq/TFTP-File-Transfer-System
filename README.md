@@ -10,6 +10,10 @@
 ### Introduction:
 The goal of this iteration is to create the client, Intermediate Host, and server programs to support steady-state file transfer. We design and implemented a file transfer system based on the TFTP specification (RFC 1350). The system will consist of TFTP client(s) running on one computer, an intermediate Host, and a multithreaded TFTP server. 
 
+****Updates in this version
+Implemented an error simulator in intermediate host.
+With the error simulator, the user can simulate delayed, duplicate, or lost packets.
+The user selects which packet will be simulated, and a desginated time if neccasary(duplicate or delay)
 
 
 ### Included Files:
@@ -19,6 +23,8 @@ The goal of this iteration is to create the client, Intermediate Host, and serve
  * ThreadedServer.java
  * Complete UML diagram (PNG file)
  * UCM diagrams for both RRQ and WRQ(PNG file)
+ Timing diagrams
+ 
    * Client.java: The client communicates with the intermediate host and can send rrq, wrq, or
 acknowledgements to the host. This is the class that the user communicates with.
 Client will either write out a file in its own system out to server, or read in 
@@ -43,9 +49,10 @@ Begin by placing a file to use for transfers in the root of the program director
  * *1) run the ThreadedServer.java class as java applications*
  * *2) run the IntermediateHost.java class as java applications*
  * *3) run the client.java class as java applications*
- 
-Then the user uses the client console window.
-In this window the user should be prompted with "(R)EAD or (W)RITE"
-user types r for read or w for write
 
-Then the user will be asked to enter the name of the file to be accessed, where the user types in the filename (including extension, in our case we used "sample.txt") and then the user is asked to enter the name of the file to be written, and again the user enters a filename including the extension. The program will then proceed to complete the command entered by the user.
+ First within the console for the intermediate host the error simulator options must be chosen
+	Here the user can choose which type of simulation to run (or to not run a simulation) 
+	and the specifications
+Second within the console for client the user chooses which type of request to send, and the name of the
+	neccasary files.
+	
