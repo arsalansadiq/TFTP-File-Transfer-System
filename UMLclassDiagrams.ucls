@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class-diagram version="1.2.2" icons="true" always-add-relationships="true" generalizations="true" realizations="true" 
+  associations="true" dependencies="true" nesting-relationships="true" router="FAN">  
+  <class id="1" language="java" name="Client" project="TFTP-File-Transfer-System" 
+    file="/TFTP-File-Transfer-System/TFTP-Network/src/Client.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="225" y="344"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="2" language="java" name="ClientConnectionThread" project="TFTP-File-Transfer-System" 
+    file="/TFTP-File-Transfer-System/TFTP-Network/src/ClientConnectionThread.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1086" y="331"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="3" language="java" name="DuplicatePacket" project="TFTP-File-Transfer-System" 
+    file="/TFTP-File-Transfer-System/TFTP-Network/src/DuplicatePacket.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="507" y="712"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="4" language="java" name="IntermediateHost" project="TFTP-File-Transfer-System" 
+    file="/TFTP-File-Transfer-System/TFTP-Network/src/IntermediateHost.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="696" y="319"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="5" language="java" name="ThreadedServer" project="TFTP-File-Transfer-System" 
+    file="/TFTP-File-Transfer-System/TFTP-Network/src/ThreadedServer.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="800" y="734"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <dependency id="6">    
+    <end type="SOURCE" refId="4"/>    
+    <end type="TARGET" refId="3"/>  
+  </dependency>  
+  <dependency id="7">    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="true" signature="true" 
+    sort-features="false" accessors="true" visibility="true">    
+    <attributes public="true" package="true" protected="true" private="true" static="true"/>    
+    <operations public="true" package="true" protected="true" private="true" static="true"/>  
+  </classifier-display>  
+  <association-display labels="true" multiplicity="true"/>
+</class-diagram>
