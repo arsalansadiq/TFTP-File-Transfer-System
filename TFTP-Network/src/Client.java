@@ -255,7 +255,7 @@ public class Client {
 		return receivingBytes;
 	}
 
-	private int byteArrToInt(byte[] blockNumber) {
+	private int byteArrToInt(byte[] blockNumber) {//
 
 		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
 
