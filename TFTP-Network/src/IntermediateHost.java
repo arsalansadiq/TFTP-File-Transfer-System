@@ -72,21 +72,25 @@ public class IntermediateHost {
 
 			System.out.println("Intermediate host: waiting for a packet from client");
 			sendReceiveSocket.receive(sendReceivePacket);
+			System.out.println("host received packet from client: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
 			sim(sendReceivePacket);
 
 			sendReceivePacket.setPort(threadPort);
 			System.out.println("Intermediate host: sending packet to thread");
 
 			sendReceiveSocket.send(sendReceivePacket);
+			System.out.println("host sending packet to thread: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
 			sim(sendReceivePacket);
 
 			System.out.println("Intermediate host: waiting for a packet from thread");
 			sendReceiveSocket.receive(sendReceivePacket);
+			System.out.println("host received packet from thread: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
 			sim(sendReceivePacket);
 
 			System.out.println("Intermediate host: sending packet to client");
 			sendReceivePacket.setPort(clientPort);
 			sendReceiveSocket.send(sendReceivePacket);
+			System.out.println("host sending packet to client: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
 			sim(sendReceivePacket);
 
 		}
@@ -122,9 +126,15 @@ public class IntermediateHost {
 
 	public boolean blockNumMatch(DatagramPacket packet) {
 		byte[] blockNumber = { packet.getData()[2], packet.getData()[3] };
-		int blockNum = blockNumber[0] + blockNumber[1];
+		int blockNum = byteArrToInt(blockNumber);
 			
 		return blockNum == packetNum;
+	}
+	
+	private int byteArrToInt(byte[] blockNumber) {
+
+		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
+
 	}
 
 	public void delayPacketErrorSim(DatagramPacket packet) throws InterruptedException {
@@ -143,6 +153,7 @@ public class IntermediateHost {
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
 		TimeUnit.SECONDS.sleep(delayTime);
  		sendReceiveSocket.send(packet);
+ 		duplicateSim = false;
 	}
 
 	private void operationSetup() {

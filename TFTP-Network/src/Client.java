@@ -246,16 +246,19 @@ public class Client {
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
 				if (blockNum == actualBlockNum)
-					acknowledgeToHost(blockNumber);
-				if (blockNum > actualBlockNum)
-					System.out.println("Client received block number: " + actualBlockNum + " but expected block number: " + blockNum);
+					acknowledgeToHost(byteArrToInt(blockNumber));
+				if (blockNum > actualBlockNum) {
+					System.out.println("Client received block number: " + actualBlockNum
+							+ " but expected block number: " + blockNum);
+					// blockNum = actualBlockNum + 1;
+				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
 	}
 
-	private int byteArrToInt(byte[] blockNumber) {//
+	private int byteArrToInt(byte[] blockNumber) {
 
 		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
 
@@ -286,8 +289,13 @@ public class Client {
 
 	}
 
-	private void acknowledgeToHost(byte[] blockNum) {
-		byte[] acknowledgeCode = { 0, 4, blockNum[0], blockNum[1] };
+	private void acknowledgeToHost(int blockNum) {
+		byte[] blockNumArray = new byte[2];
+
+		blockNumArray[0] = (byte) (blockNum & 0xFF);
+		blockNumArray[1] = (byte) ((blockNum >> 8) & 0xFF);
+
+		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
 		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
 				receivePacket.getPort());
@@ -315,9 +323,10 @@ public class Client {
 			e.printStackTrace();
 		} catch (OutOfMemoryError e) {
 			System.out.println("Out of memory on client side. Exiting.");
-
 			System.exit(0);
 		}
+		System.out.println("Finished read transfer. Exiting.");
+		System.exit(0);
 	}
 
 	public static void main(String[] args) throws IOException {
