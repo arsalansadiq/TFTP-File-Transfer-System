@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -216,10 +217,11 @@ public class Client {
 
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
-		int blockNum = 1;
+		int blockNum = 0;
+		int actualBlockNum = 0;
 
 		do {
-			System.out.println("Packet #: " + blockNum);
+			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -236,15 +238,27 @@ public class Client {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				actualBlockNum = byteArrToInt(blockNumber);
+
+				System.out.println("Client received block number: " + actualBlockNum);
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
-				acknowledgeToHost(blockNumber);
+				if (blockNum == actualBlockNum)
+					acknowledgeToHost(blockNumber);
+				if (blockNum > actualBlockNum)
+					System.out.println("Client received block number: " + actualBlockNum + " but expected block number: " + blockNum);
 			}
 
 		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
+	}
+
+	private int byteArrToInt(byte[] blockNumber) {
+
+		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
+
 	}
 
 	private void errorOccurred(DatagramPacket errorPacket) {

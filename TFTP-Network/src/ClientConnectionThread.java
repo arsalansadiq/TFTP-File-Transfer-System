@@ -172,7 +172,7 @@ public class ClientConnectionThread implements Runnable {
 		int blockNum = 1;
 
 		do {
-			System.out.println("Packet #: " + blockNum);
+			//System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -189,6 +189,8 @@ public class ClientConnectionThread implements Runnable {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				
+				System.out.println("Client received block number: " + byteArrToInt(blockNumber));
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
@@ -198,6 +200,12 @@ public class ClientConnectionThread implements Runnable {
 
 		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
+	}
+
+	private int byteArrToInt(byte[] blockNumber) {
+
+		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
+		
 	}
 
 	private void acknowledgeToHost(byte[] blockNum) {
