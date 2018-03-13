@@ -220,7 +220,6 @@ public class Client {
 		int blockNum = 0;
 		int actualBlockNum = 0;
 		
-		//sendFirstReadAcknowledgment();
 
 		do {
 			// System.out.println("Packet #: " + blockNum);
@@ -262,18 +261,6 @@ public class Client {
 		return receivingBytes;
 	}
 	
-	private void sendFirstReadAcknowledgment() {
-		byte[] acknowledgeCode = { 0, 4, 1, 0 };
-
-		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
-				receivePacket.getPort());
-		try {
-			sendReceiveSocket.send(acknowledgePacket);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
 
 	private int byteArrToInt(byte[] blockNumber) {
 
