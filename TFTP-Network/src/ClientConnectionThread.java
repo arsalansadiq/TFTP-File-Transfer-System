@@ -337,9 +337,6 @@ public class ClientConnectionThread implements Runnable {
 					blockErrorOccurred();
 				}
 			}
-			else{
-				sendReceiveSocket.send(sendDataPacket);
-			}
 
 			blockNumber++;
 			bytesRead = fis.read(readDataFromFile);

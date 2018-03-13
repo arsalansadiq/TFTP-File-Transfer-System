@@ -15,7 +15,8 @@ public class IntermediateHost {
 	private boolean wrqSim = false;
 	private boolean dataSim = false;
 	private boolean ackSim = false;
-	private int packetNum;// this will be the packet number to be used for the given error simulation
+	private int packetNum;// this will be the packet number to be used for the
+							// given error simulation
 	private int delayTime;
 
 	public IntermediateHost() {
@@ -44,79 +45,134 @@ public class IntermediateHost {
 
 		System.out.println("Intermediate host: waiting for a packet from client");
 		sendReceiveSocket.receive(sendReceivePacket);
-		
+
 		clientPort = sendReceivePacket.getPort();
 
 		sendReceivePacket.setPort(serverPort);
 		// send request to server
 		System.out.println("Intermediate host: sending packet to server");
-		sim(sendReceivePacket);
-		sendReceiveSocket.send(sendReceivePacket);
-		//sim(sendReceivePacket);
+		// sendReceiveSocket.send(sendReceivePacket);
+		sim();
 
 		// waiting for response from server
 		System.out.println("Intermediate host: waiting for a packet from thread");
 		sendReceiveSocket.receive(sendReceivePacket);
-		sim(sendReceivePacket);
 
 		threadPort = sendReceivePacket.getPort();
 		System.out.println("Intermediate host: received packet from thread");
 		// sending response to client
 		System.out.println("Intermediate host: sending packet to client");
 		sendReceivePacket.setPort(clientPort);
-		sendReceiveSocket.send(sendReceivePacket);
-		sim(sendReceivePacket);
+		// sendReceiveSocket.send(sendReceivePacket);
+		sim();
 
 		System.out.println("\nTRANSFER HAS BEGUN.................................");
 		while (true) {
 
 			System.out.println("Intermediate host: waiting for a packet from client");
 			sendReceiveSocket.receive(sendReceivePacket);
-			System.out.println("host received packet from client: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
-			sim(sendReceivePacket);
+			System.out.println("host received packet from client: " + sendReceivePacket.getData()[0]
+					+ sendReceivePacket.getData()[1]);
 
 			sendReceivePacket.setPort(threadPort);
+			sim();
 			System.out.println("Intermediate host: sending packet to thread");
 
-			sendReceiveSocket.send(sendReceivePacket);
-			System.out.println("host sending packet to thread: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
-			sim(sendReceivePacket);
+			// sendReceiveSocket.send(sendReceivePacket);
+			System.out.println("host sending packet to thread: " + sendReceivePacket.getData()[0]
+					+ sendReceivePacket.getData()[1]);
 
 			System.out.println("Intermediate host: waiting for a packet from thread");
 			sendReceiveSocket.receive(sendReceivePacket);
-			System.out.println("host received packet from thread: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
-			sim(sendReceivePacket);
+			System.out.println("host received packet from thread: " + sendReceivePacket.getData()[0]
+					+ sendReceivePacket.getData()[1]);
 
 			System.out.println("Intermediate host: sending packet to client");
 			sendReceivePacket.setPort(clientPort);
-			sendReceiveSocket.send(sendReceivePacket);
-			System.out.println("host sending packet to client: " + sendReceivePacket.getData()[0] + sendReceivePacket.getData()[1]);
-			sim(sendReceivePacket);
+			sim();
+			// sendReceiveSocket.send(sendReceivePacket);
+			System.out.println("host sending packet to client: " + sendReceivePacket.getData()[0]
+					+ sendReceivePacket.getData()[1]);
+			// sim(sendReceivePacket);
 
 		}
 	}// handle rrq and wrq
 
-	public void sim(DatagramPacket packet) throws InterruptedException, IOException {
-		byte data[] = packet.getData();
-		byte pNum[] = intToBytes(packetNum);
-		if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] == 0 && data[1] == 1)) {
-			if (duplicateSim)
-				duplicatePacketErrorSim(packet);
-			if (delaySim)
-				delayPacketErrorSim(packet);
-			if (lostSim)
-				lostPacketErrorSim(packet);
-		} else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
-			if (duplicateSim)
-				if (blockNumMatch(packet))
-					duplicatePacketErrorSim(packet);
-			if (delaySim)
-				if (blockNumMatch(packet))
-					delayPacketErrorSim(packet);
-			if (lostSim)
-				if (blockNumMatch(packet))
-					lostPacketErrorSim(packet);
+	public void sim() throws InterruptedException, IOException {
+		byte data[] = sendReceivePacket.getData();
+
+		if (duplicateSim) {
+			if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] == 0 && data[1] == 1))
+				duplicatePacketErrorSim(sendReceivePacket);
+			else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
+				if (blockNumMatch(sendReceivePacket)) {
+					System.out.println("Block numbers matched for duplicate");
+					duplicatePacketErrorSim(sendReceivePacket);
+				} else
+					sendReceiveSocket.send(sendReceivePacket);
+
+			} else
+				sendReceiveSocket.send(sendReceivePacket);
+
 		}
+
+		if (delaySim) {
+			if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] == 0 && data[1] == 1))
+				delayPacketErrorSim(sendReceivePacket);
+			else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
+				if (blockNumMatch(sendReceivePacket)) {
+					System.out.println("Block numbers matched for duplicate");
+					delayPacketErrorSim(sendReceivePacket);
+				}else
+					sendReceiveSocket.send(sendReceivePacket);
+			} else
+				sendReceiveSocket.send(sendReceivePacket);
+
+		}
+
+		if (lostSim) {
+			if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] == 0 && data[1] == 1))
+				lostPacketErrorSim(sendReceivePacket);
+			else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
+				if (blockNumMatch(sendReceivePacket)) {
+					System.out.println("Block numbers matched for duplicate");
+					lostPacketErrorSim(sendReceivePacket);
+				}else
+					sendReceiveSocket.send(sendReceivePacket);
+			} else
+				sendReceiveSocket.send(sendReceivePacket);
+
+		}
+
+		if (!duplicateSim && !delaySim && !lostSim) {
+			sendReceiveSocket.send(sendReceivePacket);
+		}
+
+		// if (duplicateSim || delaySim || lostSim) {
+		// if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] ==
+		// 0 && data[1] == 1)) {
+		// if (duplicateSim)
+		// duplicatePacketErrorSim(packet);
+		// if (delaySim)
+		// delayPacketErrorSim(packet);
+		// if (lostSim)
+		// lostPacketErrorSim(packet);
+		// } else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim &&
+		// data[0] == 0 && data[1] == 4)) {
+		// if (duplicateSim)
+		// if (blockNumMatch(packet)) {
+		// System.out.println("Block numbers matched for duplicate");
+		// duplicatePacketErrorSim(packet);
+		// }
+		// if (delaySim)
+		// if (blockNumMatch(packet))
+		// delayPacketErrorSim(packet);
+		// if (lostSim)
+		// if (blockNumMatch(packet))
+		// lostPacketErrorSim(packet);
+		// }
+		// } else
+		// sendReceiveSocket.send(packet);
 
 	}
 
@@ -127,10 +183,10 @@ public class IntermediateHost {
 	public boolean blockNumMatch(DatagramPacket packet) {
 		byte[] blockNumber = { packet.getData()[2], packet.getData()[3] };
 		int blockNum = byteArrToInt(blockNumber);
-			
+
 		return blockNum == packetNum;
 	}
-	
+
 	private int byteArrToInt(byte[] blockNumber) {
 
 		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
@@ -143,17 +199,18 @@ public class IntermediateHost {
 		// if this is not a datagram packet return; else conduct simulation
 		// if (!(data[0] == 0 && data[1] == 3));
 		// else {
-		// if((data[1] == pNum[0] && data[2] == pNum[1]))//if this is the chosen packet
+		// if((data[1] == pNum[0] && data[2] == pNum[1]))//if this is the chosen
+		// packet
 		// to delay{
 		TimeUnit.SECONDS.sleep(delayTime);
 		// }
 	}
 
-
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
+		sendReceiveSocket.send(packet);
 		TimeUnit.SECONDS.sleep(delayTime);
- 		sendReceiveSocket.send(packet);
- 		duplicateSim = false;
+		sendReceiveSocket.send(packet);
+		duplicateSim = false;
 	}
 
 	private void operationSetup() {
