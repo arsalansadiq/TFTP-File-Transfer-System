@@ -335,6 +335,7 @@ public class ClientConnectionThread implements Runnable {
 								+ checkBlock);
 				if (blockNumber != checkBlock) {
 					blockErrorOccurred();
+					blockNumber--;
 				}
 			}
 
