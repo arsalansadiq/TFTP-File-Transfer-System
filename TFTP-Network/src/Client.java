@@ -248,12 +248,14 @@ public class Client {
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
-				if (blockNum == actualBlockNum)
+				if (blockNum == actualBlockNum){
 					acknowledgeToHost(byteArrToInt(blockNumber));
+				}
 				if (blockNum != actualBlockNum) {
 					System.out.println("Client received block number: " + actualBlockNum
 							+ " but expected block number: " + blockNum);
-					// blockNum = actualBlockNum + 1;
+					blockNum = actualBlockNum;
+					System.out.println("Client blockNum is: " + blockNum);
 				}
 			}
 
