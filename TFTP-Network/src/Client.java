@@ -83,10 +83,11 @@ public class Client {
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
 			// receiving file from server
-//			if (Files.exists(filePathWrittenTo)) {
-//				System.out.println("File " + fileName + " already exists on client side.");
-//				System.exit(0);
-//			}
+			// if (Files.exists(filePathWrittenTo)) {
+			// System.out.println("File " + fileName + " already exists on
+			// client side.");
+			// System.exit(0);
+			// }
 
 			ByteArrayOutputStream receivingBytes = getFile();
 			writeOutReceivedFile(receivingBytes, fileName);
@@ -219,7 +220,6 @@ public class Client {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 0;
 		int actualBlockNum = 0;
-		
 
 		do {
 			// System.out.println("Packet #: " + blockNum);
@@ -231,9 +231,9 @@ public class Client {
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
 
-			//System.out.println("client is waiting for packet");
+			// System.out.println("client is waiting for packet");
 			sendReceiveSocket.receive(receivePacket);
-			//System.out.println("client is still waitng");
+			// System.out.println("client is still waitng");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
@@ -245,23 +245,23 @@ public class Client {
 
 				System.out.println("Client received block number: " + actualBlockNum);
 
-				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
-				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+				if (blockNum == actualBlockNum) {
+					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
-				if (blockNum == actualBlockNum){
 					acknowledgeToHost(byteArrToInt(blockNumber));
 				}
 				if (blockNum != actualBlockNum) {
-					System.out.println("Client was expecting block number: " + blockNum + " but received block number: " + actualBlockNum);
+					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
+							+ actualBlockNum + ". Discarding...");
 					blockNum = actualBlockNum;
-					//System.out.println("Client blockNum is: " + blockNum);
+					// System.out.println("Client blockNum is: " + blockNum);
 				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
 	}
-	
 
 	private int byteArrToInt(byte[] blockNumber) {
 

@@ -172,7 +172,7 @@ public class ClientConnectionThread implements Runnable {
 		int blockNum = 1;
 
 		do {
-			//System.out.println("Packet #: " + blockNum);
+			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -189,7 +189,7 @@ public class ClientConnectionThread implements Runnable {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
-				
+
 				System.out.println("Client received block number: " + byteArrToInt(blockNumber));
 
 				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
@@ -205,7 +205,7 @@ public class ClientConnectionThread implements Runnable {
 	private int byteArrToInt(byte[] blockNumber) {
 
 		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
-		
+
 	}
 
 	private void acknowledgeToHost(int blockNum) {
@@ -213,7 +213,7 @@ public class ClientConnectionThread implements Runnable {
 
 		blockNumArray[0] = (byte) (blockNum & 0xFF);
 		blockNumArray[1] = (byte) ((blockNum >> 8) & 0xFF);
-		
+
 		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
 		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
@@ -328,7 +328,7 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]);
 
 			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
-				byte[] blockNumberRe = { sendDataPacket.getData()[2],sendDataPacket.getData()[3] };
+				byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
 				int checkBlock = byteArrToInt(blockNumberRe);
 				System.out.println(
 						"Acknowledgment from client, sending file for read request in progress with block number :"
@@ -347,7 +347,6 @@ public class ClientConnectionThread implements Runnable {
 		System.exit(0);
 
 	}
-	
 
 	private void blockErrorOccurred() {
 		System.out.println("Error in thread");
