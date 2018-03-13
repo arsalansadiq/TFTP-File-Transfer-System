@@ -207,7 +207,7 @@ public class IntermediateHost {
 	}
 
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
-		sendReceiveSocket.send(packet);
+		//sendReceiveSocket.send(packet);
 		TimeUnit.SECONDS.sleep(delayTime);
 		sendReceiveSocket.send(packet);
 		duplicateSim = false;
