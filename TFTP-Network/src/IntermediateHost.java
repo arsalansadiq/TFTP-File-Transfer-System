@@ -180,21 +180,29 @@ public class IntermediateHost {
 
 	}
 
-	public void lostPacketErrorSim(DatagramPacket packet) throws  IOException {
-		byte data[] = new byte[516];
-		data = packet.getData();
-		data[0]=9;//change to BS number
-		data[1]=9;
-		data[2]=9;
-		data[3]=9;
-		packet.setData(data);
-		sendReceivePacket=packet;
-		sendReceiveSocket.send(sendReceivePacket);//send someBS numbers and then check for the acknowlegde
-		
+	public void lostPacketErrorSim(DatagramPacket packet) throws IOException {
+//		byte data[] = new byte[516];
+//		data = packet.getData();
+//		data[0]=9;//change to BS number
+//		data[1]=9;
+//		data[2]=9;
+//		data[3]=9;
+//		packet.setData(data);
+//		sendReceivePacket=packet;
+//		sendReceiveSocket.send(sendReceivePacket);//send someBS numbers and then check for the acknowlegde
+//		
 		//sendReceiveSocket.receive(sendReceivePacket);
 		//sendReceiveSocket.setSoTimeout(5);
 		
-		
+		 try {
+			 sendReceiveSocket.setSoTimeout(5000);
+			sendReceiveSocket.receive(sendReceivePacket);
+			
+	      } catch (SocketException se) {
+	         //se.printStackTrace();
+	    	  System.out.println("Nothing recived yet, so you send something");
+	         sendReceiveSocket.send(sendReceivePacket);
+	      }
 	}
 
 	public boolean blockNumMatch(DatagramPacket packet) {
