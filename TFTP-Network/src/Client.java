@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -82,10 +83,11 @@ public class Client {
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
 			// receiving file from server
-			if (Files.exists(filePathWrittenTo)) {
-				System.out.println("File " + fileName + " already exists on client side.");
-				System.exit(0);
-			}
+			// if (Files.exists(filePathWrittenTo)) {
+			// System.out.println("File " + fileName + " already exists on
+			// client side.");
+			// System.exit(0);
+			// }
 
 			ByteArrayOutputStream receivingBytes = getFile();
 			writeOutReceivedFile(receivingBytes, fileName);
@@ -216,10 +218,11 @@ public class Client {
 
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
-		int blockNum = 1;
+		int blockNum = 0;
+		int actualBlockNum = 0;
 
 		do {
-			System.out.println("Packet #: " + blockNum);
+			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
 			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
@@ -228,7 +231,9 @@ public class Client {
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
 
+			// System.out.println("client is waiting for packet");
 			sendReceiveSocket.receive(receivePacket);
+			// System.out.println("client is still waitng");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
@@ -236,15 +241,32 @@ public class Client {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				actualBlockNum = byteArrToInt(blockNumber);
 
-				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
-				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+				System.out.println("Client received block number: " + actualBlockNum);
 
-				acknowledgeToHost(blockNumber);
+				if (blockNum == actualBlockNum) {
+					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+
+					acknowledgeToHost(byteArrToInt(blockNumber));
+				}
+				if (blockNum != actualBlockNum) {
+					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
+							+ actualBlockNum + ". Discarding...");
+					blockNum = actualBlockNum;
+					// System.out.println("Client blockNum is: " + blockNum);
+				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));
 		return receivingBytes;
+	}
+
+	private int byteArrToInt(byte[] blockNumber) {
+
+		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
+
 	}
 
 	private void errorOccurred(DatagramPacket errorPacket) {
@@ -272,8 +294,13 @@ public class Client {
 
 	}
 
-	private void acknowledgeToHost(byte[] blockNum) {
-		byte[] acknowledgeCode = { 0, 4, blockNum[0], blockNum[1] };
+	private void acknowledgeToHost(int blockNum) {
+		byte[] blockNumArray = new byte[2];
+
+		blockNumArray[0] = (byte) (blockNum & 0xFF);
+		blockNumArray[1] = (byte) ((blockNum >> 8) & 0xFF);
+
+		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
 		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
 				receivePacket.getPort());
@@ -301,9 +328,10 @@ public class Client {
 			e.printStackTrace();
 		} catch (OutOfMemoryError e) {
 			System.out.println("Out of memory on client side. Exiting.");
-
 			System.exit(0);
 		}
+		System.out.println("Finished read transfer. Exiting.");
+		System.exit(0);
 	}
 
 	public static void main(String[] args) throws IOException {
