@@ -169,19 +169,22 @@ public class ClientConnectionThread implements Runnable {
 
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
-		int blockNum = 1;
+		int blockNum = 0;
+		int actualBlockNum = 0;
 
 		do {
 			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
-			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
+			holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
 												// opcode + 2 byte 0's
 
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 					sendReceiveSocket.getLocalPort());
 
+			// System.out.println("client is waiting for packet");
 			sendReceiveSocket.receive(receivePacket);
+			// System.out.println("client is still waitng");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
@@ -189,13 +192,22 @@ public class ClientConnectionThread implements Runnable {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				actualBlockNum = byteArrToInt(blockNumber);
 
-				System.out.println("Client received block number: " + byteArrToInt(blockNumber));
+				System.out.println("Client received block number: " + actualBlockNum);
 
-				DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
-				writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+				if (blockNum == actualBlockNum) {
+					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
-				acknowledgeToHost(byteArrToInt(blockNumber));
+					acknowledgeToHost(byteArrToInt(blockNumber));
+				}
+				if (blockNum != actualBlockNum) {
+					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
+							+ actualBlockNum + ". Discarding...");
+					blockNum = actualBlockNum;
+					// System.out.println("Client blockNum is: " + blockNum);
+				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));
@@ -302,7 +314,7 @@ public class ClientConnectionThread implements Runnable {
 			System.exit(0);
 		}
 
-		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
+		byte[] readDataFromFile = new byte[508];
 
 		int bytesRead = fis.read(readDataFromFile);
 
@@ -310,9 +322,9 @@ public class ClientConnectionThread implements Runnable {
 
 		while (bytesRead != -1) {
 			System.out.println("bytes read is: " + bytesRead);
-			if (bytesRead == 512) {
+			if (bytesRead == 508) {
 				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
-						readDataFromFile.length, inetAddress, 23);
+						readDataFromFile.length + 4, inetAddress, 23);
 			} else {
 				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
 						inetAddress, 23);

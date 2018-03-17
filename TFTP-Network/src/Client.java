@@ -225,7 +225,7 @@ public class Client {
 			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
-			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
+			holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
 												// opcode + 2 byte 0's
 
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
@@ -233,7 +233,7 @@ public class Client {
 
 			// System.out.println("client is waiting for packet");
 			sendReceiveSocket.receive(receivePacket);
-			// System.out.println("client is still waitng");
+			// System.out.println("client is still waiting");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
