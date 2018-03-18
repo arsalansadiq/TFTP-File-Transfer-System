@@ -68,7 +68,7 @@ public class Client {
 				fis = new FileInputStream(new File(currentPath + "\\Client", fileName));
 			} catch (FileNotFoundException e) {
 				System.out
-						.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
+				.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
 				System.exit(0);
 			}
 
@@ -83,10 +83,10 @@ public class Client {
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
 			// receiving file from server
-			 if (Files.exists(filePathWrittenTo)) {
-			 System.out.println("File " + fileName + " already exists on client side.");
-			 System.exit(0);
-			 }
+			if (Files.exists(filePathWrittenTo)) {
+				System.out.println("File " + fileName + " already exists on client side.");
+				System.exit(0);
+			}
 
 			ByteArrayOutputStream receivingBytes = getFile();
 			writeOutReceivedFile(receivingBytes, fileName);
@@ -172,7 +172,7 @@ public class Client {
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
 				System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-								+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);
@@ -238,7 +238,7 @@ public class Client {
 		}
 
 		setupFullRequest[posInArray] = zero; // last element of request is byte
-												// 0
+		// 0
 		return setupFullRequest;
 
 	}
@@ -247,19 +247,20 @@ public class Client {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 0;
 		int actualBlockNum = 0;
+		byte[] blockNumber=new byte[2];
+		holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
+		// opcode + 2 byte 0's
 
+		receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
+				sendReceiveSocket.getLocalPort());
+		sendReceiveSocket.receive(receivePacket);
 		do {
 			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
-			holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
-												// opcode + 2 byte 0's
 
-			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
-					sendReceiveSocket.getLocalPort());
 
 			// System.out.println("client is waiting for packet");
-			sendReceiveSocket.receive(receivePacket);
 			// System.out.println("client is still waiting");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
@@ -267,7 +268,8 @@ public class Client {
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
-				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				 blockNumber[0]=  holdReceivingArray[2];
+				 blockNumber[1]=holdReceivingArray[3] ;
 				actualBlockNum = byteArrToInt(blockNumber);
 
 				System.out.println("Client received block number: " + actualBlockNum);
@@ -277,17 +279,26 @@ public class Client {
 					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
 					acknowledgeToHost(byteArrToInt(blockNumber));
+					sendReceiveSocket.receive(receivePacket);
+
 				}
-				if (blockNum != actualBlockNum) {
+				else if (blockNum != actualBlockNum) {
 					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
-					blockNum = actualBlockNum;
-					acknowledgeToHost(byteArrToInt(blockNumber));
-					System.out.println("Client blockNum is: " + blockNum);
+					blockNum--;
+					sendReceiveSocket.receive(receivePacket);
+					//acknowledgeToHost(byteArrToInt(blockNumber));
 				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));
+		if(receivePacket.getLength()!=0) {
+			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+			blockNum++;
+			System.out.println("Client received block number: " + blockNum);
+			acknowledgeToHost(byteArrToInt(blockNumber));
+		}
 		return receivingBytes;
 	}
 
