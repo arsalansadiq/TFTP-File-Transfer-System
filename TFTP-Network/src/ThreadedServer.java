@@ -41,7 +41,7 @@ public class ThreadedServer {
 			}
 
 			if (receive.equals(receiveOld)) {
-				System.out.println("Server: Duplicate read or request received. Discarding...");
+				System.out.println("Server: Duplicate read or write request received. Discarding...");
 			} else {
 				Runnable newClient = new ClientConnectionThread(receivePacket);
 				new Thread(newClient).start();

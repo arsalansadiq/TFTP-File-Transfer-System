@@ -1,6 +1,6 @@
 # TFTP-File-Transfer-System
-## SYSC 3303 - Project Iteration 3
-### Version: 3.0
+## SYSC 3303 - Project Iteration 1
+### Version: 1.0
 ### Author(s) 
  * Harshan Anton
  * Aly Khan Barolia
