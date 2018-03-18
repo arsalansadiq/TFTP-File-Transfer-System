@@ -132,7 +132,7 @@ public class IntermediateHost {
 				
 			else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
 				if (blockNumMatch(sendReceivePacket)) {
-					System.out.println("Block numbers matched for duplicate");
+					System.out.println("Block numbers matched for delay... so delaying it");
 					delayPacketErrorSim(sendReceivePacket);
 					sendReceiveSocket.send(sendReceivePacket);
 				} else
@@ -147,7 +147,7 @@ public class IntermediateHost {
 				lostPacketErrorSim(sendReceivePacket);
 			else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
 				if (blockNumMatch(sendReceivePacket)) {
-					System.out.println("Block numbers matched for duplicate");
+					System.out.println("Block numbers matched for lost so losing packet");
 					lostPacketErrorSim(sendReceivePacket);
 				} else
 					sendReceiveSocket.send(sendReceivePacket);
@@ -208,7 +208,7 @@ public class IntermediateHost {
 			
 	      } catch (SocketTimeoutException se) {
 	         //se.printStackTrace();
-	    	  System.out.println("NOTHING RECEIVED YET, MAYBE WE LOST A PACKET ......RETRYING........");
+	    	  System.out.println("\nNOTHING RECEIVED YET, MAYBE WE LOST A PACKET ......RETRYING........\n");
 	         sendReceiveSocket.send(sendReceivePacket);
 	      }
 	}
