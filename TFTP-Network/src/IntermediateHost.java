@@ -68,7 +68,7 @@ public class IntermediateHost {
 
 		System.out.println("\nTRANSFER HAS BEGUN.................................");
 		while (true) {
-
+			try {
 			System.out.println("Intermediate host: waiting for a packet from client");
 			sendReceiveSocket.receive(sendReceivePacket);
 			System.out.println("host received packet from client: " + sendReceivePacket.getData()[0]
@@ -83,7 +83,15 @@ public class IntermediateHost {
 					+ sendReceivePacket.getData()[1]);
 
 			System.out.println("Intermediate host: waiting for a packet from thread");
-			sendReceiveSocket.receive(sendReceivePacket);
+			//try {
+				sendReceiveSocket.receive(sendReceivePacket);
+			}catch (SocketTimeoutException se){
+				System.out.println("Exiting");
+				break;
+				//continue;
+				
+			}
+			
 			System.out.println("host received packet from thread: " + sendReceivePacket.getData()[0]
 					+ sendReceivePacket.getData()[1]);
 
@@ -200,7 +208,7 @@ public class IntermediateHost {
 			
 	      } catch (SocketTimeoutException se) {
 	         //se.printStackTrace();
-	    	  System.out.println("NOTHING RECEIVED YET, RETRYING........");
+	    	  System.out.println("NOTHING RECEIVED YET, MAYBE WE LOST A PACKET ......RETRYING........");
 	         sendReceiveSocket.send(sendReceivePacket);
 	      }
 	}
