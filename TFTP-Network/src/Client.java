@@ -255,7 +255,8 @@ public class Client {
 					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
 					blockNum = actualBlockNum;
-					// System.out.println("Client blockNum is: " + blockNum);
+					acknowledgeToHost(byteArrToInt(blockNumber));
+					System.out.println("Client blockNum is: " + blockNum);
 				}
 			}
 

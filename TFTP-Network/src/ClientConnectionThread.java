@@ -319,8 +319,34 @@ public class ClientConnectionThread implements Runnable {
 		int bytesRead = fis.read(readDataFromFile);
 
 		int blockNumber = 1;
+		
+		System.out.println("bytes read is: " + bytesRead);
+		if (bytesRead == 508) {
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
+					readDataFromFile.length + 4, inetAddress, 23);
+		} else {
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
+					inetAddress, 23);
+		}
+		// bytesRead should contain the number of bytes read in this
+		// operation.
+		// send data to client on random port
+		sendReceiveSocket.send(sendDataPacket);
+		System.out.println("Sending data packet from thread to host. Replying to read request");
+		
+		blockNumber++;
+		bytesRead = fis.read(readDataFromFile);
+
+		// wait for acknowledgment
+		sendReceiveSocket.receive(sendDataPacket);
+		System.out.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]);
 
 		while (bytesRead != -1) {
+			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
+			int checkBlock = byteArrToInt(blockNumberRe);
+			
+			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4 && checkBlock == (blockNumber-1)) {
+			
 			System.out.println("bytes read is: " + bytesRead);
 			if (bytesRead == 508) {
 				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
@@ -339,20 +365,27 @@ public class ClientConnectionThread implements Runnable {
 			sendReceiveSocket.receive(sendDataPacket);
 			System.out.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]);
 
-			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
-				byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
-				int checkBlock = byteArrToInt(blockNumberRe);
-				System.out.println(
-						"Acknowledgment from client, sending file for read request in progress with block number :"
-								+ checkBlock);
-				if (blockNumber != checkBlock) {
-					blockErrorOccurred();
-					blockNumber--;
-				}
-			}
+//			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
+//				byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
+//				int checkBlock = byteArrToInt(blockNumberRe);
+//				System.out.println(
+//						"Acknowledgment from client, sending file for read request in progress with block number :"
+//								+ checkBlock);
+//				if (blockNumber != checkBlock) {
+//					blockErrorOccurred();
+//					blockNumber--;
+//				}
+//			}
 
 			blockNumber++;
 			bytesRead = fis.read(readDataFromFile);
+		}else
+		{
+			System.out.println("DID NOT SEND ANOTHER DATA BACK block number is: "+ blockNumber + " received is: " + checkBlock);
+			System.out.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]);
+			blockNumber = checkBlock + 1;
+			bytesRead = fis.read(readDataFromFile);
+		}
 		}
 
 		fis.close();
