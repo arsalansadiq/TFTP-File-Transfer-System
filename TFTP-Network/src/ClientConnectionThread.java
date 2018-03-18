@@ -171,6 +171,7 @@ public class ClientConnectionThread implements Runnable {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 0;
 		int actualBlockNum = 0;
+		byte[] blockNumber = new byte[2];
 		holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
 		// opcode + 2 byte 0's
 
@@ -182,7 +183,7 @@ public class ClientConnectionThread implements Runnable {
 			blockNum++;
 
 			// System.out.println("client is waiting for packet");
-			
+
 			// System.out.println("client is still waiting");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
@@ -190,17 +191,19 @@ public class ClientConnectionThread implements Runnable {
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
-				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
+				blockNumber [0]= holdReceivingArray[2];
+				blockNumber [1]=holdReceivingArray[3];
 				actualBlockNum = byteArrToInt(blockNumber);
 
 				System.out.println("Thread received block number: " + actualBlockNum);
-
 				if (blockNum == actualBlockNum) {
 					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
 					acknowledgeToHost(byteArrToInt(blockNumber));
 					sendReceiveSocket.receive(receivePacket);
+					//
+
 				}
 				else if (blockNum != actualBlockNum) {
 					System.out.println("Thread was expecting block number: " + blockNum + " but received block number: "
@@ -214,6 +217,12 @@ public class ClientConnectionThread implements Runnable {
 			}
 
 		} while (!(receivePacket.getLength() < 512));
+		if(receivePacket.getLength()!=0) {
+			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
+			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
+			System.out.println("Thread received block number: " + actualBlockNum);
+			acknowledgeToHost(byteArrToInt(blockNumber));
+		}
 		return receivingBytes;
 	}
 
