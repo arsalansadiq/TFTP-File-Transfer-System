@@ -83,17 +83,16 @@ public class Client {
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
 			// receiving file from server
-			// if (Files.exists(filePathWrittenTo)) {
-			// System.out.println("File " + fileName + " already exists on
-			// client side.");
-			// System.exit(0);
-			// }
+			 if (Files.exists(filePathWrittenTo)) {
+			 System.out.println("File " + fileName + " already exists on client side.");
+			 System.exit(0);
+			 }
 
 			ByteArrayOutputStream receivingBytes = getFile();
 			writeOutReceivedFile(receivingBytes, fileName);
 		} else if (readWriteOPCode == 2) {
 
-			holdReceivingArray = new byte[516]; // 516 because 512 data + 2 byte
+			holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
 			// opcode + 2 byte 0's
 
 			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
@@ -121,45 +120,73 @@ public class Client {
 
 	private void beginWritingToServer() throws IOException {
 
-		byte[] readDataFromFile = new byte[508]; // 512 byte chunks
+		byte[] readDataFromFile = new byte[508];
 
 		int bytesRead = fis.read(readDataFromFile);
 
 		int blockNumber = 1;
 
+		System.out.println("bytes read is: " + bytesRead);
+		if (bytesRead == 508) {
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
+					readDataFromFile.length + 4, inetAddress, 23);
+		} else {
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
+					inetAddress, 23);
+		}
+		// bytesRead should contain the number of bytes read in this
+		// operation.
+		// send data to client on random port
+		sendReceiveSocket.send(sendDataPacket);
+		System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+
+		blockNumber++;
+		bytesRead = fis.read(readDataFromFile);
+
+		// wait for acknowledgment
+		sendReceiveSocket.receive(sendDataPacket);
+		System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+
 		while (bytesRead != -1) {
-			System.out.println("bytes read is: " + bytesRead);
-			if (bytesRead == 512) {
-				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
-						readDataFromFile.length, inetAddress, 23);
-			} else {
-				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
-						inetAddress, 23);
-			}
-			// bytesRead should contain the number of bytes read in this
-			// operation.
-			// send data to client on random port
-			sendReceiveSocket.send(sendDataPacket);
-			System.out.println("Sent data packet to server, writing to server.");
+			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
+			int checkBlock = byteArrToInt(blockNumberRe);
 
-			// wait for acknowledgment
+			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
+					&& checkBlock == (blockNumber - 1)) {
 
-			sendReceiveSocket.receive(sendDataPacket);
-
-			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4) {
-				int checkBlock = sendDataPacket.getData()[2] + sendDataPacket.getData()[3];
-				System.out
-						.println("Acknowledgment received for our write in progress with block number: " + checkBlock);
-				if (blockNumber != checkBlock) {
-					// errorOccurred();
+				System.out.println("bytes read is: " + bytesRead);
+				if (bytesRead == 508) {
+					sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
+							readDataFromFile.length + 4, inetAddress, 23);
+				} else {
+					sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
+							inetAddress, 23);
 				}
-			}
 
-			blockNumber++;
-			bytesRead = fis.read(readDataFromFile);
+				sendReceiveSocket.send(sendDataPacket);
+				System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+
+				// wait for acknowledgment
+				sendReceiveSocket.receive(sendDataPacket);
+				System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+								+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+
+				blockNumber++;
+				bytesRead = fis.read(readDataFromFile);
+			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
+					&& checkBlock != (blockNumber - 1)) {
+				System.out.println("DID NOT SEND ANOTHER DATA BACK");
+
+				sendReceiveSocket.receive(sendDataPacket);
+			}
 		}
 
 		fis.close();
+		//System.out.println("Done transfer. Exiting.");
+		//System.exit(0);
 
 	}
 

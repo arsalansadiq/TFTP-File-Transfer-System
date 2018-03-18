@@ -171,19 +171,18 @@ public class ClientConnectionThread implements Runnable {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
 		int blockNum = 0;
 		int actualBlockNum = 0;
+		holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
+		// opcode + 2 byte 0's
 
+		receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
+				sendReceiveSocket.getLocalPort());
+		sendReceiveSocket.receive(receivePacket);
 		do {
 			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
 
-			holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
-												// opcode + 2 byte 0's
-
-			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
-					sendReceiveSocket.getLocalPort());
-
 			// System.out.println("client is waiting for packet");
-			sendReceiveSocket.receive(receivePacket);
+			
 			// System.out.println("client is still waiting");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
@@ -194,20 +193,23 @@ public class ClientConnectionThread implements Runnable {
 				byte[] blockNumber = { holdReceivingArray[2], holdReceivingArray[3] };
 				actualBlockNum = byteArrToInt(blockNumber);
 
-				System.out.println("Client received block number: " + actualBlockNum);
+				System.out.println("Thread received block number: " + actualBlockNum);
 
 				if (blockNum == actualBlockNum) {
 					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
 					acknowledgeToHost(byteArrToInt(blockNumber));
+					sendReceiveSocket.receive(receivePacket);
 				}
-				if (blockNum != actualBlockNum) {
-					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
+				else if (blockNum != actualBlockNum) {
+					System.out.println("Thread was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
-					blockNum = actualBlockNum;
-					acknowledgeToHost(byteArrToInt(blockNumber));
-					System.out.println("Client blockNum is: " + blockNum);
+					//blockNum = actualBlockNum+1;
+					blockNum--;
+					sendReceiveSocket.receive(receivePacket);
+					//	acknowledgeToHost(byteArrToInt(blockNumber));
+					//	System.out.println("Thread blockNum is: " + blockNum);
 				}
 			}
 
@@ -365,9 +367,8 @@ public class ClientConnectionThread implements Runnable {
 
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
-				System.out
-						.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-								+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+				System.out.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);
