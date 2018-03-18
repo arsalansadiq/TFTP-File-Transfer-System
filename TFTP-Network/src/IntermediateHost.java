@@ -198,9 +198,9 @@ public class IntermediateHost {
 			 sendReceiveSocket.setSoTimeout(5000);
 			sendReceiveSocket.receive(sendReceivePacket);
 			
-	      } catch (SocketException se) {
+	      } catch (SocketTimeoutException se) {
 	         //se.printStackTrace();
-	    	  System.out.println("Nothing recived yet, so you send something");
+	    	  System.out.println("NOTHING RECEIVED YET, RETRYING........");
 	         sendReceiveSocket.send(sendReceivePacket);
 	      }
 	}
