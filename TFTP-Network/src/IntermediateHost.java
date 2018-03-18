@@ -68,7 +68,7 @@ public class IntermediateHost {
 
 		System.out.println("\nTRANSFER HAS BEGUN.................................");
 		while (true) {
-
+			try {
 			System.out.println("Intermediate host: waiting for a packet from client");
 			sendReceiveSocket.receive(sendReceivePacket);
 			System.out.println("host received packet from client: " + sendReceivePacket.getData()[0]
@@ -86,7 +86,12 @@ public class IntermediateHost {
 			sendReceiveSocket.receive(sendReceivePacket);
 			System.out.println("host received packet from thread: " + sendReceivePacket.getData()[0]
 					+ sendReceivePacket.getData()[1]);
-
+		}catch (SocketTimeoutException se){
+			System.out.println("Exiting");
+			break;
+			//continue;
+			
+		}
 			System.out.println("Intermediate host: sending packet to client");
 			sendReceivePacket.setPort(clientPort);
 			sim();
@@ -117,12 +122,15 @@ public class IntermediateHost {
 		}
 
 		if (delaySim) {
-			if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] == 0 && data[1] == 1))
+			if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] == 0 && data[1] == 1)) {
 				delayPacketErrorSim(sendReceivePacket);
+				sendReceiveSocket.send(sendReceivePacket);
+			}
 			else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
 				if (blockNumMatch(sendReceivePacket)) {
 					System.out.println("Block numbers matched for duplicate");
 					delayPacketErrorSim(sendReceivePacket);
+					sendReceiveSocket.send(sendReceivePacket);
 				} else
 					sendReceiveSocket.send(sendReceivePacket);
 			} else
@@ -177,7 +185,28 @@ public class IntermediateHost {
 	}
 
 	public void lostPacketErrorSim(DatagramPacket packet) throws IOException {
-		sendReceiveSocket.receive(sendReceivePacket);
+//		byte data[] = new byte[516];
+//		data = packet.getData();
+//		data[0]=9;//change to BS number
+//		data[1]=9;
+//		data[2]=9;
+//		data[3]=9;
+//		packet.setData(data);
+//		sendReceivePacket=packet;
+//		sendReceiveSocket.send(sendReceivePacket);//send someBS numbers and then check for the acknowlegde
+//		
+		//sendReceiveSocket.receive(sendReceivePacket);
+		//sendReceiveSocket.setSoTimeout(5);
+		
+		 try {
+			 sendReceiveSocket.setSoTimeout(5000);
+			sendReceiveSocket.receive(sendReceivePacket);
+			
+	      } catch (SocketTimeoutException se) {
+	         //se.printStackTrace();
+	    	  System.out.println("\nNOTHING RECEIVED YET, MAYBE WE LOST A PACKET ......RETRYING........\n");
+	         sendReceiveSocket.send(sendReceivePacket);
+	      }
 	}
 
 	public boolean blockNumMatch(DatagramPacket packet) {
