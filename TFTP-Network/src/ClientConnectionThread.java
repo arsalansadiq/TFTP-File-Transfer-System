@@ -370,9 +370,8 @@ public class ClientConnectionThread implements Runnable {
 
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
-				System.out
-						.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-								+ " with block number " + sendDataPacket.getData()[2]);
+				System.out.println("Thread received packet: " + sendDataPacket.getData()[0]
+						+ sendDataPacket.getData()[1] + " with block number " + sendDataPacket.getData()[2]);
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);
