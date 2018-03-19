@@ -64,11 +64,6 @@ public class ClientConnectionThread implements Runnable {
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 
-		// Scanner input = new Scanner(System.in);
-		// System.out.println("Enter the name of the file to be written to:");
-		// fileNameToWrite = input.next();
-		// input.close();
-
 		currentPath = currentRelativePath.toAbsolutePath().toString();
 		fileName = getFileName(receivePacket);
 
@@ -371,13 +366,13 @@ public class ClientConnectionThread implements Runnable {
 
 				sendReceiveSocket.send(sendDataPacket);
 				System.out.println("Thread sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+						+ " with block number " + sendDataPacket.getData()[2]);
 
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
 				System.out
 						.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-								+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+								+ " with block number " + sendDataPacket.getData()[2]);
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);

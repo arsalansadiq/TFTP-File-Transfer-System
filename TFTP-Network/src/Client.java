@@ -139,7 +139,7 @@ public class Client {
 		// send data to client on random port
 		sendReceiveSocket.send(sendDataPacket);
 		System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+				+ " with block number " + sendDataPacket.getData()[2]);
 
 		blockNumber++;
 		bytesRead = fis.read(readDataFromFile);
@@ -147,7 +147,7 @@ public class Client {
 		// wait for acknowledgment
 		sendReceiveSocket.receive(sendDataPacket);
 		System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+				+ " with block number " + sendDataPacket.getData()[2]);
 
 		while (bytesRead != -1) {
 			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
@@ -167,13 +167,13 @@ public class Client {
 
 				sendReceiveSocket.send(sendDataPacket);
 				System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+						+ " with block number " + sendDataPacket.getData()[2]);
 
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
 				System.out
 						.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-								+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+								+ " with block number " + sendDataPacket.getData()[2]);
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);
