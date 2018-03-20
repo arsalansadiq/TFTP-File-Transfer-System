@@ -3,7 +3,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Scanner;
+//import java.util.Scanner;
 
 public class ClientConnectionThread implements Runnable {
 
@@ -214,7 +214,7 @@ public class ClientConnectionThread implements Runnable {
 		if (receivePacket.getLength() != 0) {
 			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
-			System.out.println("Thread received block number: " + actualBlockNum);
+			System.out.println("Thread received block number: " + (actualBlockNum+1));
 			acknowledgeToHost(byteArrToInt(blockNumber));
 		}
 		return receivingBytes;

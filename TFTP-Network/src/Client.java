@@ -1,6 +1,6 @@
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
+//import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,14 +13,16 @@ public class Client {
 	private DatagramPacket receivePacket;
 	private DatagramPacket sendDataPacket;
 
-	private Path filePath, filePathWrittenTo;
+	private Path filePathWrittenTo;
+	private Path filePath;
 
 	private final int hostPort = 23;
 
 	private byte[] serverRequest;
 	private byte[] holdReceivingArray;
 
-	private String fileName, fileNameToWrite;
+	private String fileName; 
+	//private String fileNameToWrite;
 
 	private FileInputStream fis = null;
 	String currentPath;
@@ -171,11 +173,15 @@ public class Client {
 
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
-				System.out.println("Client received packet: " + sendDataPacket.getData()[0]
+				bytesRead = fis.read(readDataFromFile);
+				if(bytesRead==-1)
+					System.out.println("Client received packet: " + sendDataPacket.getData()[0]
+							+ sendDataPacket.getData()[1] + " with block number " + (sendDataPacket.getData()[2]+1));
+				else
+					System.out.println("Client received packet: " + sendDataPacket.getData()[0]
 						+ sendDataPacket.getData()[1] + " with block number " + sendDataPacket.getData()[2]);
 
 				blockNumber++;
-				bytesRead = fis.read(readDataFromFile);
 			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
 					&& checkBlock != (blockNumber - 1)) {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
