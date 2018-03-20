@@ -12,6 +12,7 @@ public class Client {
 	private DatagramPacket sendPacket;
 	private DatagramPacket receivePacket;
 	private DatagramPacket sendDataPacket;
+	private DatagramPacket mostRecentPacket;
 
 	private Path filePath, filePathWrittenTo;
 
@@ -115,6 +116,9 @@ public class Client {
 			}
 
 		}
+		else {//Invalid request code
+			System.out.println("The file request was invalid, must either be a write or read");			
+		}
 
 	}
 
@@ -138,6 +142,8 @@ public class Client {
 		// operation.
 		// send data to client on random port
 		sendReceiveSocket.send(sendDataPacket);
+		mostRecentPacket=sendDataPacket;
+
 		System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
 				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
@@ -166,6 +172,7 @@ public class Client {
 				}
 
 				sendReceiveSocket.send(sendDataPacket);
+				mostRecentPacket=sendDataPacket;
 				System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
 						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
@@ -317,6 +324,23 @@ public class Client {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
+			String errorStr=new String (errorPacket.getData());
+			char errorChar=errorStr.charAt(1);
+			byte errorByte=(byte)errorChar;
+			if((mostRecentPacket.getData()[1]+0x30)==errorByte) {
+			try {
+				sendReceiveSocket.send(mostRecentPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			}
+			else {
+				//terminate and delete the partial file
+			}
+			//wrong type of packet type was received on the server side, first two characters identify expected packet type
+			//if most recent packet sent matches the type, resend... else terminate transfer and delete partial file.
+			
 		}
 
 		int nameLength = 0;
@@ -345,6 +369,7 @@ public class Client {
 				receivePacket.getPort());
 		try {
 			sendReceiveSocket.send(acknowledgePacket);
+			mostRecentPacket=acknowledgePacket;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

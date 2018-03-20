@@ -56,6 +56,18 @@ public class ClientConnectionThread implements Runnable {
 		} else if (data[0] == 0 && data[1] == 2) {
 			writeRequestReceived();
 		}
+		else {
+			System.out.println("Invalid connection request, must be a read or a write\n ie: opcode = 01 or 02");
+			byte[] errorPacket = createErrorPacket(4, "(4)Invalid connection request, must be a read or a write\\n ie: opcode = 01 or 02");
+			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+			try {
+				sendReceiveSocket.send(sendErrorPacket);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+
+		}
 
 	}
 
@@ -75,7 +87,7 @@ public class ClientConnectionThread implements Runnable {
 		Path filePath = Paths.get(currentPath + "\\Server", fileName);
 
 		if (Files.exists(filePath)) {
-			byte[] errorPacket = createErrorPacket(6, "File " + fileName + " already exists at server side.");
+			byte[] errorPacket = createErrorPacket(6, "(6)File " + fileName + " already exists at server side.");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -156,7 +168,7 @@ public class ClientConnectionThread implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (OutOfMemoryError e) {
-			byte[] errorPacket = createErrorPacket(3, "File " + fileNameTowrite + " ran out of memory on server side");
+			byte[] errorPacket = createErrorPacket(3, "(3)File " + fileNameTowrite + " ran out of memory on server side");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -214,6 +226,18 @@ public class ClientConnectionThread implements Runnable {
 					//	acknowledgeToHost(byteArrToInt(blockNumber));
 					//	System.out.println("Thread blockNum is: " + blockNum);
 				}
+			}else {//wrong packet type
+				System.out.println("Expecting Data Packet, wrong op code recieved");
+				byte[] errorPacket = createErrorPacket(4, "(4)Expecting Data Packet, wrong op code recieved");
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				//steps of handling this case...
+				//send error packet to client... 
+
 			}
 
 		} while (!(receivePacket.getLength() < 512));
@@ -300,7 +324,7 @@ public class ClientConnectionThread implements Runnable {
 
 		if (!isFileReadable(fileName)) {
 			byte[] errorPacket = createErrorPacket(2,
-					"File " + fileName + " not readable on server at path " + currentPath + "\\Server");
+					"(2)File " + fileName + " not readable on server at path " + currentPath + "\\Server");
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -315,7 +339,7 @@ public class ClientConnectionThread implements Runnable {
 			fis = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
 			byte[] errorPacket = createErrorPacket(1,
-					"File " + fileName + " not found on server at path " + currentPath);
+					"(1)File " + fileName + " not found on server at path " + currentPath);
 			sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, receivePacket.getPort());
 			try {
 				sendReceiveSocket.send(sendErrorPacket);
@@ -386,6 +410,17 @@ public class ClientConnectionThread implements Runnable {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
 
 				sendReceiveSocket.receive(sendDataPacket);
+			}
+			else if(!(sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4)) {
+				System.out.println("Expecting ACK Pack, wrong op code recieved");
+				byte[] errorPacket = createErrorPacket(4, "(4)Expecting ACK Pack, wrong op code recieved");
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				//steps of handling this case...
 			}
 		}
 
