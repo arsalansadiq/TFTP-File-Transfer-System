@@ -139,7 +139,7 @@ public class Client {
 					inetAddress, 23);
 		}
 		// bytesRead should contain the number of bytes read in this
-		// operation.
+		// operation
 		// send data to client on random port
 		sendReceiveSocket.send(sendDataPacket);
 		mostRecentPacket=sendDataPacket;
@@ -157,7 +157,7 @@ public class Client {
 		while(sendDataPacket.getData()[1]!=4) {//loop until the recieved packet is ack... 
 			errorCount++;
 			if(errorCount>=5)
-				{System.out.println("Critical Error,");System.exit(0);}
+				{System.out.println("Critical Error,Server sent an illegal packet 5 consecutive times");System.exit(0);}
 			sendReceiveSocket.send(createErrorPacket(4, "(4) Illegal TFTP operation. Expecting ACK packet",inetAddress, hostPort ));//send errorMessage to server, we recieved illegal packet type
 			sendReceiveSocket.receive(sendDataPacket);	//server should re-send its ack packet...
 		}
@@ -197,6 +197,13 @@ public class Client {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
 
 				sendReceiveSocket.receive(sendDataPacket);
+			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 5) {//server sent packet error packet... must resend last packet and wait for server response
+				errorOccurred(sendDataPacket);	//let error occurred handle this			
+			} else {//the data packet is an illegal type... was expecting an ack packet received something else, send error packet to server, server should resend its last packet
+				//create error packet, send to server, wait for packet
+				System.out.println("ERROR OCCURRED: ILLEGAL TFTP OPERATION RECEIVED -- EXPECTING ACK PACK");
+				sendReceiveSocket.send(createErrorPacket(4, "(4) Illegal TFTP operation. Expecting ack packet",inetAddress, hostPort ));//send errorMessage to server, we recieved illegal packet type
+				sendReceiveSocket.receive(sendDataPacket);//after the server recieved the error message from the previous line it should resend its last packet
 			}
 		}
 
@@ -284,9 +291,8 @@ public class Client {
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
-				receivePacket.setLength(512);
-				
-			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
+				//server got the wrong packet, resend last packet and recieve again
+			}  if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				blockNum++;
 
 				blockNumber[0]=  holdReceivingArray[2];
@@ -312,6 +318,7 @@ public class Client {
 				}
 			}
 			else {//did not receive an error packet or data packet... packet error
+				System.out.println("ERROR EXPECTING DATA PACKET RECEIVED ILLEGAL PACKET -- SEND ERROR PACKET TO HOST WAIT FOR RESPONSE");;
 				sendReceiveSocket.send(createErrorPacket(4, "(3) Illegal TFTP operation. Expecting data packet",inetAddress, hostPort ));//send errorMessage to server, we recieved illegal packet type
 				sendReceiveSocket.receive(receivePacket);//after the server recieved the error message from the previous line it should resend its last packet
 			}
@@ -333,7 +340,7 @@ public class Client {
 
 	}
 
-	private void errorOccurred(DatagramPacket errorPacket) {
+	private void errorOccurred(DatagramPacket errorPacket) throws IOException {
 		if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1) {
 			System.out.println("Error code 1: File not found. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2) {
@@ -355,6 +362,8 @@ public class Client {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				sendReceiveSocket.receive(sendDataPacket);
+				receivePacket=sendDataPacket;
 			//}
 		//	else {
 				//terminate and delete the partial file

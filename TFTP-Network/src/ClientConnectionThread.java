@@ -9,6 +9,7 @@ public class ClientConnectionThread implements Runnable {
 
 	private DatagramSocket sendReceiveSocket;
 	private DatagramPacket receivePacket;
+	private DatagramPacket mostRecentPacket;
 	private DatagramPacket sendDataPacket;
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
@@ -20,7 +21,8 @@ public class ClientConnectionThread implements Runnable {
 	private FileInputStream fis = null;
 	private DatagramPacket sendErrorPacket;
 	private String fileName;
-
+	private int hostPort;
+	
 	String fileNameToWrite;
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
@@ -122,7 +124,10 @@ public class ClientConnectionThread implements Runnable {
 		System.arraycopy(receivePacket.getData(), 2, packetData, 0, nameLength);
 		return new String(packetData);
 	}
-
+	public DatagramPacket makeErrorPacket(int errorID, String errorMsg, InetAddress iAddy, int port) {
+		byte[]errorData = createErrorPacket(errorID, errorMsg);
+		return new DatagramPacket(errorData, errorData.length, iAddy, port);
+	}
 	private byte[] createErrorPacket(int errorCode, String errorMessage) {
 		int posInErrorArray = 0;
 		byte zeroByte = 0;
@@ -202,7 +207,8 @@ public class ClientConnectionThread implements Runnable {
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
-			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
+			} 
+			if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				blockNumber [0]= holdReceivingArray[2];
 				blockNumber [1]=holdReceivingArray[3];
 				actualBlockNum = byteArrToInt(blockNumber);
@@ -226,15 +232,16 @@ public class ClientConnectionThread implements Runnable {
 					//	acknowledgeToHost(byteArrToInt(blockNumber));
 					//	System.out.println("Thread blockNum is: " + blockNum);
 				}
-			}else {//wrong packet type
-				System.out.println("Expecting Data Packet, wrong op code recieved");
-				byte[] errorPacket = createErrorPacket(4, "(4)Expecting Data Packet, wrong op code recieved");
-				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+			}
+			if(!(requestCode[0] == 0 && requestCode[1] == 5)&&!(requestCode[1] == 3)) {//wrong packet type
+				blockNum--;
+				System.out.println("ERROR ILLEGAL PACKET RECEIVED -- EXPECTING DATA PACKET -- SENDING ERROR PACKET TO CLIENT WAITING FOR PROPER PACKET");
 				try {
-					sendReceiveSocket.send(sendErrorPacket);
+					sendReceiveSocket.send(makeErrorPacket(4, "(3)Expecting Data Packet, wrong op code recieved",inetAddress, hostPort));
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+				sendReceiveSocket.receive(receivePacket);
 				//steps of handling this case...
 				//send error packet to client... 
 
@@ -268,12 +275,13 @@ public class ClientConnectionThread implements Runnable {
 				receivePacket.getPort());
 		try {
 			sendReceiveSocket.send(acknowledgePacket);
+			mostRecentPacket=acknowledgePacket;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void errorOccurred(DatagramPacket errorPacket) {
+	private void errorOccurred(DatagramPacket errorPacket) throws IOException {
 		if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1) {
 			System.out.println("Error code 1: File not found. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2) {
@@ -282,6 +290,28 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+		}else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
+			//packet error occured... server recieved wrong packet resend last packet
+			System.out.println("Error code 4: Server recieved wrong packet type, resending last packet.");
+			//	String errorStr=new String (errorPacket.getData());
+			//	char errorChar=errorStr.charAt(1);
+			//	byte errorByte=(byte)errorChar;
+			//should only allow this to occur so many times in a row.
+			//	if((mostRecentPacket.getData()[1]+0x30)==errorByte) {//make sure mostrecent contains the packet server is expecting
+			try {
+				sendReceiveSocket.send(mostRecentPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			sendReceiveSocket.receive(sendDataPacket);
+			receivePacket=sendDataPacket;
+			//}
+			//	else {
+			//terminate and delete the partial file
+			//}
+			//wrong type of packet type was received on the server side, first two characters identify expected packet type
+			//if most recent packet sent matches the type, resend... else terminate transfer and delete partial file.
+
 		}
 
 		int nameLength = 0;
@@ -304,6 +334,7 @@ public class ClientConnectionThread implements Runnable {
 				receivePacket.getPort());
 		try {
 			sendReceiveSocket.send(acknowledgePacket);
+			mostRecentPacket=acknowledgePacket;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -367,6 +398,7 @@ public class ClientConnectionThread implements Runnable {
 		// operation.
 		// send data to client on random port
 		sendReceiveSocket.send(sendDataPacket);
+		mostRecentPacket=sendDataPacket;
 		System.out.println("Thread sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
 				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
@@ -381,9 +413,11 @@ public class ClientConnectionThread implements Runnable {
 		while (bytesRead != -1) {
 			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
 			int checkBlock = byteArrToInt(blockNumberRe);
-
+			if(sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 5) {
+				errorOccurred(sendDataPacket);
+			}
 			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
-					&& checkBlock == (blockNumber - 1)) {
+					&& checkBlock == (blockNumber - 1)) {//ack packet recieved with proper block number
 
 				System.out.println("bytes read is: " + bytesRead);
 				if (bytesRead == 508) {
@@ -395,6 +429,7 @@ public class ClientConnectionThread implements Runnable {
 				}
 
 				sendReceiveSocket.send(sendDataPacket);
+				mostRecentPacket=sendDataPacket;
 				System.out.println("Thread sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
 						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
@@ -405,21 +440,20 @@ public class ClientConnectionThread implements Runnable {
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);
-			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
+			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4//block numbers do not match
 					&& checkBlock != (blockNumber - 1)) {
-				System.out.println("DID NOT SEND ANOTHER DATA BACK");
+				System.out.println("DID NOT SEND ANOTHER DATA BACK BLOCK NUMBERS DO NOT MATCH");
 
 				sendReceiveSocket.receive(sendDataPacket);
 			}
-			else if(!(sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4)) {
-				System.out.println("Expecting ACK Pack, wrong op code recieved");
-				byte[] errorPacket = createErrorPacket(4, "(4)Expecting ACK Pack, wrong op code recieved");
-				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+			else if(!(sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4)) {//illegal packet recieved, send error packet and wait for next packet
+				System.out.println("ERROR ILLEGAL PACKET RECEIVED -- EXPECTING ACK PACKET -- SENDING ERROR PACKET TO CLIENT WAITING FOR PROPER PACKET");
 				try {
-					sendReceiveSocket.send(sendErrorPacket);
+					sendReceiveSocket.send(makeErrorPacket(4, "(4)Expecting Data Packet, wrong op code recieved",inetAddress, hostPort));
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+				sendReceiveSocket.receive(receivePacket);
 				//steps of handling this case...
 			}
 		}
