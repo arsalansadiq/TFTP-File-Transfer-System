@@ -13,7 +13,6 @@ public class Client {
 	private DatagramPacket receivePacket;
 	private DatagramPacket sendDataPacket;
 	private DatagramPacket mostRecentPacket;
-
 	private Path filePath, filePathWrittenTo;
 
 	private final int hostPort = 23;
@@ -168,8 +167,7 @@ public class Client {
 			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
 			int checkBlock = byteArrToInt(blockNumberRe);
 
-			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
-					&& checkBlock == (blockNumber - 1)) {
+			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4 && checkBlock == (blockNumber - 1)) {
 
 				System.out.println("bytes read is: " + bytesRead);
 				if (bytesRead == 508) {
