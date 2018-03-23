@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class IntermediateHost {
 	private DatagramSocket sendReceiveSocket = null;
+	private DatagramSocket tempSocket = null;
 	private DatagramPacket sendReceivePacket;
 	private final int serverPort = 69;
 	private int clientPort, threadPort = 0;
@@ -157,8 +158,8 @@ public class IntermediateHost {
 		if(TIDChange) {
 			if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim && data[0] == 0 && data[1] == 4)) {
 				if (blockNumMatch(sendReceivePacket)) {
-					System.out.println("TD has been Changede");
-					lostPacketErrorSim(sendReceivePacket);
+					System.out.println("TD has been Changed");
+					TIDchangeErrorSim(sendReceivePacket);
 				}
 			}
 		}
@@ -255,10 +256,16 @@ public class IntermediateHost {
 	
 	private void TIDchangeErrorSim(DatagramPacket packet) {
 		try {
-			sendReceiveSocket = new DatagramSocket(23);
+			tempSocket = new DatagramSocket(45);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(0);
+		}
+		try {
+			tempSocket.send(packet);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
