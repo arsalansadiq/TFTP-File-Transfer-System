@@ -1,6 +1,6 @@
 import java.io.*;
 import java.net.*;
-//import java.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,25 +12,25 @@ public class Client {
 	private DatagramPacket sendPacket;
 	private DatagramPacket receivePacket;
 	private DatagramPacket sendDataPacket;
+	private DatagramPacket mostRecentPacket;
 
-	private Path filePathWrittenTo;
-	private Path filePath;
+	private Path filePath, filePathWrittenTo;
 
 	private final int hostPort = 23;
 
 	private byte[] serverRequest;
 	private byte[] holdReceivingArray;
 
-	private String fileName; 
-	//private String fileNameToWrite;
-
+	private String fileName, fileNameToWrite;
+	private int safePort;
 	private FileInputStream fis = null;
 	String currentPath;
 
+	
+	
 	private void setup() throws IOException {
 
 		byte readWriteOPCode = 00;
-
 		inetAddress = InetAddress.getLocalHost();
 		sendReceiveSocket = new DatagramSocket();
 
@@ -69,8 +69,7 @@ public class Client {
 			try {
 				fis = new FileInputStream(new File(currentPath + "\\Client", fileName));
 			} catch (FileNotFoundException e) {
-				System.out
-						.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
+				System.out.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
 				System.exit(0);
 			}
 
@@ -97,10 +96,10 @@ public class Client {
 			holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
 			// opcode + 2 byte 0's
 
-			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
-					sendReceiveSocket.getLocalPort());
+			receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,sendReceiveSocket.getLocalPort());
 
 			sendReceiveSocket.receive(receivePacket);
+			safePort = receivePacket.getPort();//********************************************************************************************************************
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 
@@ -108,14 +107,17 @@ public class Client {
 				errorOccurred(receivePacket);
 			}
 
-			byte[] buffer = { holdReceivingArray[0], holdReceivingArray[1], holdReceivingArray[2],
-					holdReceivingArray[3] };
+			byte[] buffer = { holdReceivingArray[0], holdReceivingArray[1], holdReceivingArray[2],holdReceivingArray[3] };
 
 			if (buffer[0] == 0 && buffer[1] == 4 && buffer[2] == 0 && buffer[3] == 0) {
 				System.out.println("Acknowledgment received for our write request, now beginning to write to server.");
+				safePort = receivePacket.getPort(); //**********************************************************************************************************
 				beginWritingToServer();
 			}
 
+		}
+		else {//Invalid request code
+			System.out.println("The file request was invalid, must either be a write or read");			
 		}
 
 	}
@@ -130,26 +132,26 @@ public class Client {
 
 		System.out.println("bytes read is: " + bytesRead);
 		if (bytesRead == 508) {
-			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
-					readDataFromFile.length + 4, inetAddress, 23);
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), readDataFromFile.length + 4, inetAddress, 23);
 		} else {
-			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
-					inetAddress, 23);
+			sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,inetAddress, 23);
 		}
 		// bytesRead should contain the number of bytes read in this
 		// operation.
 		// send data to client on random port
 		sendReceiveSocket.send(sendDataPacket);
-		System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-				+ " with block number " + sendDataPacket.getData()[2]);
+		mostRecentPacket=sendDataPacket;
+
+		System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
 		blockNumber++;
 		bytesRead = fis.read(readDataFromFile);
 
 		// wait for acknowledgment
+		
 		sendReceiveSocket.receive(sendDataPacket);
 		System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-				+ " with block number " + sendDataPacket.getData()[2]);
+				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
 		while (bytesRead != -1) {
 			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
@@ -168,20 +170,17 @@ public class Client {
 				}
 
 				sendReceiveSocket.send(sendDataPacket);
+				mostRecentPacket=sendDataPacket;
 				System.out.println("Client sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-						+ " with block number " + sendDataPacket.getData()[2]);
+						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
 				// wait for acknowledgment
 				sendReceiveSocket.receive(sendDataPacket);
-				bytesRead = fis.read(readDataFromFile);
-				if(bytesRead==-1)
-					System.out.println("Client received packet: " + sendDataPacket.getData()[0]
-							+ sendDataPacket.getData()[1] + " with block number " + (sendDataPacket.getData()[2]+1));
-				else
-					System.out.println("Client received packet: " + sendDataPacket.getData()[0]
-						+ sendDataPacket.getData()[1] + " with block number " + sendDataPacket.getData()[2]);
+				System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+						+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
 				blockNumber++;
+				bytesRead = fis.read(readDataFromFile);
 			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
 					&& checkBlock != (blockNumber - 1)) {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
@@ -191,8 +190,8 @@ public class Client {
 		}
 
 		fis.close();
-		// System.out.println("Done transfer. Exiting.");
-		// System.exit(0);
+		//System.out.println("Done transfer. Exiting.");
+		//System.exit(0);
 
 	}
 
@@ -251,19 +250,19 @@ public class Client {
 
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
+		int newSafePort = 0;
 		int blockNum = 0;
 		int actualBlockNum = 0;
-		byte[] blockNumber = new byte[2];
+		byte[] blockNumber=new byte[2];
 		holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
 		// opcode + 2 byte 0's
 
-		receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
-				sendReceiveSocket.getLocalPort());
+		receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,sendReceiveSocket.getLocalPort());
 		sendReceiveSocket.receive(receivePacket);
+		safePort = receivePacket.getPort();
 		do {
 			// System.out.println("Packet #: " + blockNum);
 			blockNum++;
-
 			// System.out.println("client is waiting for packet");
 			// System.out.println("client is still waiting");
 
@@ -272,8 +271,8 @@ public class Client {
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
-				blockNumber[0] = holdReceivingArray[2];
-				blockNumber[1] = holdReceivingArray[3];
+				 blockNumber[0]=  holdReceivingArray[2];
+				 blockNumber[1]=holdReceivingArray[3] ;
 				actualBlockNum = byteArrToInt(blockNumber);
 
 				System.out.println("Client received block number: " + actualBlockNum);
@@ -284,18 +283,26 @@ public class Client {
 
 					acknowledgeToHost(byteArrToInt(blockNumber));
 					sendReceiveSocket.receive(receivePacket);
-
-				} else if (blockNum != actualBlockNum) {
+					newSafePort= receivePacket.getPort();
+					
+				}
+				else if (blockNum != actualBlockNum) {
 					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
 					blockNum--;
 					sendReceiveSocket.receive(receivePacket);
-					// acknowledgeToHost(byteArrToInt(blockNumber));
+					newSafePort= receivePacket.getPort();
+					//acknowledgeToHost(byteArrToInt(blockNumber));
+				}
+				if (safePort != newSafePort) {
+					System.out.println("************PACKET COMING FROM DIFFERENT HOST, DISCARDING........*************");
+					
 				}
 			}
 
 		} while (!(receivePacket.getLength() < 512));
-		if (receivePacket.getLength() != 0) {
+		
+		if(receivePacket.getLength()!=0) {
 			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 			blockNum++;
@@ -320,6 +327,23 @@ public class Client {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
+			String errorStr=new String (errorPacket.getData());
+			char errorChar=errorStr.charAt(1);
+			byte errorByte=(byte)errorChar;
+			if((mostRecentPacket.getData()[1]+0x30)==errorByte) {
+			try {
+				sendReceiveSocket.send(mostRecentPacket);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			}
+			else {
+				//terminate and delete the partial file
+			}
+			//wrong type of packet type was received on the server side, first two characters identify expected packet type
+			//if most recent packet sent matches the type, resend... else terminate transfer and delete partial file.
+			
 		}
 
 		int nameLength = 0;
@@ -348,6 +372,7 @@ public class Client {
 				receivePacket.getPort());
 		try {
 			sendReceiveSocket.send(acknowledgePacket);
+			mostRecentPacket=acknowledgePacket;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
