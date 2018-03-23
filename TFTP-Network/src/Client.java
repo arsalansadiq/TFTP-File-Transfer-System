@@ -152,6 +152,15 @@ public class Client {
 
 		// wait for acknowledgment
 		sendReceiveSocket.receive(sendDataPacket);
+		//check to make sure an acknowledge was received
+		int errorCount=0;
+		while(sendDataPacket.getData()[1]!=4) {//loop until the recieved packet is ack... 
+			errorCount++;
+			if(errorCount>=5)
+				{System.out.println("Critical Error,");System.exit(0);}
+			sendReceiveSocket.send(createErrorPacket(4, "(4) Illegal TFTP operation. Expecting ACK packet",inetAddress, hostPort ));//send errorMessage to server, we recieved illegal packet type
+			sendReceiveSocket.receive(sendDataPacket);	//server should re-send its ack packet...
+		}
 		System.out.println("Client received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
 				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 
@@ -261,22 +270,27 @@ public class Client {
 		receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 				sendReceiveSocket.getLocalPort());
 		sendReceiveSocket.receive(receivePacket);
+		byte[] requestCode= new byte[2];
 		do {
 			// System.out.println("Packet #: " + blockNum);
-			blockNum++;
 
 
 
 			// System.out.println("client is waiting for packet");
 			// System.out.println("client is still waiting");
 
-			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+			requestCode[0] =  holdReceivingArray[0];
+			requestCode[1]=holdReceivingArray[1] ;
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
+				receivePacket.setLength(512);
+				
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
-				 blockNumber[0]=  holdReceivingArray[2];
-				 blockNumber[1]=holdReceivingArray[3] ;
+				blockNum++;
+
+				blockNumber[0]=  holdReceivingArray[2];
+				blockNumber[1]=holdReceivingArray[3] ;
 				actualBlockNum = byteArrToInt(blockNumber);
 
 				System.out.println("Client received block number: " + actualBlockNum);
@@ -296,6 +310,10 @@ public class Client {
 					sendReceiveSocket.receive(receivePacket);
 					//acknowledgeToHost(byteArrToInt(blockNumber));
 				}
+			}
+			else {//did not receive an error packet or data packet... packet error
+				sendReceiveSocket.send(createErrorPacket(4, "(3) Illegal TFTP operation. Expecting data packet",inetAddress, hostPort ));//send errorMessage to server, we recieved illegal packet type
+				sendReceiveSocket.receive(receivePacket);//after the server recieved the error message from the previous line it should resend its last packet
 			}
 
 		} while (!(receivePacket.getLength() < 512));
@@ -325,22 +343,25 @@ public class Client {
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
-			String errorStr=new String (errorPacket.getData());
-			char errorChar=errorStr.charAt(1);
-			byte errorByte=(byte)errorChar;
-			if((mostRecentPacket.getData()[1]+0x30)==errorByte) {
-			try {
-				sendReceiveSocket.send(mostRecentPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			}
-			else {
+			//packet error occured... server recieved wrong packet resend last packet
+			System.out.println("Error code 4: Server recieved wrong packet type, resending last packet.");
+		//	String errorStr=new String (errorPacket.getData());
+		//	char errorChar=errorStr.charAt(1);
+		//	byte errorByte=(byte)errorChar;
+			//should only allow this to occur so many times in a row.
+		//	if((mostRecentPacket.getData()[1]+0x30)==errorByte) {//make sure mostrecent contains the packet server is expecting
+				try {
+					sendReceiveSocket.send(mostRecentPacket);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			//}
+		//	else {
 				//terminate and delete the partial file
-			}
+			//}
 			//wrong type of packet type was received on the server side, first two characters identify expected packet type
 			//if most recent packet sent matches the type, resend... else terminate transfer and delete partial file.
-			
+
 		}
 
 		int nameLength = 0;
@@ -396,6 +417,39 @@ public class Client {
 		}
 		System.out.println("Finished read transfer. Exiting.");
 		System.exit(0);
+	}
+	public DatagramPacket createErrorPacket(int errorID, String errorMsg, InetAddress iAddy, int port) {
+		byte[]errorData = createErrorPacketData(errorID, errorMsg);
+		return new DatagramPacket(errorData, errorData.length, iAddy, port);
+	}
+	private byte[] createErrorPacketData (int errorCode, String errorMessage) {
+		int posInErrorArray = 0;
+		byte zeroByte = 0;
+		byte five = 5;
+
+		int errorPacketLength = 4 + errorMessage.length() + 1;
+
+		byte[] setupErrorPacket = new byte[errorPacketLength];
+
+		setupErrorPacket[posInErrorArray] = zeroByte;
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = five;
+		posInErrorArray++;
+
+		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
+		posInErrorArray++;
+
+		for (int i = 0; i < errorMessage.length(); i++) {
+			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
+			posInErrorArray++;
+		}
+
+		setupErrorPacket[posInErrorArray] = zeroByte;
+
+		return setupErrorPacket;
+
 	}
 
 	public static void main(String[] args) throws IOException {
