@@ -72,7 +72,11 @@ public class ClientConnectionThread implements Runnable {
 		}
 
 	}
-
+	public boolean checkModeValidity(byte[] packetData) {
+		//dont copy till 0 byte then copy till zero byte
+		byte[] mode;
+		return false;
+	}
 	private void writeRequestReceived() {
 
 		Path currentRelativePath = Paths.get("");
