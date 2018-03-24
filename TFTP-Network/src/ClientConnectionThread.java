@@ -51,12 +51,35 @@ public class ClientConnectionThread implements Runnable {
 
 		if (data[0] == 0 && data[1] == 1) {
 			try {
-				readRequestReceived();
+				if(checkModeValidity(data))
+					readRequestReceived();
+				else {
+					System.out.println("(4)ERROR The RRQ contains an invalid Mode");
+					try {
+						sendReceiveSocket.send(makeErrorPacket(4, "The RRQ contains an invalid Mode", inetAddress, hostPort));
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					System.exit(0);
+				}
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} else if (data[0] == 0 && data[1] == 2) {
-			writeRequestReceived();
+			if(checkModeValidity(data))
+				writeRequestReceived();
+			else {
+				System.out.println("(4)ERROR The WRQ contains an invalid Mode");
+				try {
+					sendReceiveSocket.send(makeErrorPacket(4, "The WRQ contains an invalid Mode", inetAddress, hostPort));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.exit(0);
+			}
 		}
 		else {
 			System.out.println("Invalid connection request, must be a read or a write\n ie: opcode = 01 or 02");
@@ -72,11 +95,23 @@ public class ClientConnectionThread implements Runnable {
 		}
 
 	}
+	//check to make sure the request packet has a valid mode 
 	public boolean checkModeValidity(byte[] packetData) {
 		//dont copy till 0 byte then copy till zero byte
-		byte[] mode;
+		int indexOfMode = 0;
+		int endOfIndex=0;
+		for (int i=0;packetData[i]!=0;i++)
+			indexOfMode++;
+		for (int i=indexOfMode+1;packetData[i]!=0;i++)
+			endOfIndex++;
+		byte[] mode= new byte[endOfIndex];
+		System.arraycopy(packetData, indexOfMode, mode, 0, endOfIndex);
+		String modeAsText= new String (mode);
+		if (modeAsText.equalsIgnoreCase("NETASCII")||modeAsText.equalsIgnoreCase("octet")||modeAsText.equalsIgnoreCase("mail"))
+			return true;
 		return false;
 	}
+	
 	private void writeRequestReceived() {
 
 		Path currentRelativePath = Paths.get("");
