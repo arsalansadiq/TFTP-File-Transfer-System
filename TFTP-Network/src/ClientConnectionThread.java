@@ -266,6 +266,8 @@ public class ClientConnectionThread implements Runnable {
 					System.out.println("Thread was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
 					//blockNum = actualBlockNum+1;
+					//send errorPacket?
+					sendReceiveSocket.send(makeErrorPacket(4, "Error occurred, wrong block number resend last packet", inetAddress, hostPort));
 					blockNum--;
 					sendReceiveSocket.receive(receivePacket);
 					//	acknowledgeToHost(byteArrToInt(blockNumber));

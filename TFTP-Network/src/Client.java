@@ -193,6 +193,7 @@ public class Client {
 			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
 					&& checkBlock != (blockNumber - 1)) {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
+				sendReceiveSocket.send(createErrorPacket(4, "Error occurred, wrong block number resend last packet", inetAddress, hostPort));
 
 				sendReceiveSocket.receive(sendDataPacket);
 			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 5) {//server sent packet error packet... must resend last packet and wait for server response
@@ -311,6 +312,7 @@ public class Client {
 					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
 					blockNum--;
+					sendReceiveSocket.send(createErrorPacket(4, "Error occurred, wrong block number resend last packet", inetAddress, hostPort));
 					sendReceiveSocket.receive(receivePacket);
 					//acknowledgeToHost(byteArrToInt(blockNumber));
 				}
