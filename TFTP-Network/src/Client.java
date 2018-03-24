@@ -25,6 +25,8 @@ public class Client {
 	private int safePort;
 	private FileInputStream fis = null;
 	String currentPath;
+	
+	private DatagramPacket sendErrorPacket;
 
 	
 	
@@ -295,7 +297,17 @@ public class Client {
 					//acknowledgeToHost(byteArrToInt(blockNumber));
 				}
 				if (safePort != newSafePort) {
-					System.out.println("************PACKET COMING FROM DIFFERENT HOST, DISCARDING........*************");
+					System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");
+					byte[] errorPacket = createErrorPacket(5, "Packet came from port: " + receivePacket.getPort() + " but expected from port: " + safePort);
+					sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+					try {
+						sendReceiveSocket.send(sendErrorPacket);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					blockNum--;
+					sendReceiveSocket.receive(receivePacket);
+					newSafePort= receivePacket.getPort();
 					
 				}
 			}
@@ -310,6 +322,36 @@ public class Client {
 			acknowledgeToHost(byteArrToInt(blockNumber));
 		}
 		return receivingBytes;
+	}
+	
+	private byte[] createErrorPacket(int errorCode, String errorMessage) {
+		int posInErrorArray = 0;
+		byte zeroByte = 0;
+		byte five = 5;
+
+		int errorPacketLength = 4 + errorMessage.length() + 1;
+
+		byte[] setupErrorPacket = new byte[errorPacketLength];
+
+		setupErrorPacket[posInErrorArray] = zeroByte;
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = five;
+		posInErrorArray++;
+
+		setupErrorPacket[posInErrorArray] = (byte) ((errorCode >> 8) & 0xFF);
+		posInErrorArray++;
+		setupErrorPacket[posInErrorArray] = (byte) (errorCode & 0xFF);
+		posInErrorArray++;
+
+		for (int i = 0; i < errorMessage.length(); i++) {
+			setupErrorPacket[posInErrorArray] = (byte) errorMessage.charAt(i);
+			posInErrorArray++;
+		}
+
+		setupErrorPacket[posInErrorArray] = zeroByte;
+
+		return setupErrorPacket;
+
 	}
 
 	private int byteArrToInt(byte[] blockNumber) {

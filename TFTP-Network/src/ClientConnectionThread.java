@@ -252,7 +252,21 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+		}else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 5) {
+			System.out.println("Error code 5: Unknown TID. The error message is: ");
+//			if (bytesRead == 508) {
+//				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
+//						readDataFromFile.length + 4, inetAddress, 23);
+//			} else {
+//				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
+//						inetAddress, 23);
+//			}
+
+//			sendReceiveSocket.send(sendDataPacket);
+//			System.out.println("Sent the last packet again.");
+//			sendReceiveSocket.receive(sendDataPacket);
 		}
+
 
 		int nameLength = 0;
 		for (int i = 4; errorPacket.getData()[i] != 0; i++) {
@@ -266,6 +280,8 @@ public class ClientConnectionThread implements Runnable {
 		System.out.println(errorMessage);
 
 	}
+	
+	
 
 	private void sendFirstWriteAcknowledgment() {
 		byte[] acknowledgeCode = { 0, 4, 0, 0 };
@@ -380,6 +396,10 @@ public class ClientConnectionThread implements Runnable {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
 
 				sendReceiveSocket.receive(sendDataPacket);
+			}else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 5){
+				errorOccurred(sendDataPacket);
+				
+				
 			}
 		}
 
@@ -388,6 +408,8 @@ public class ClientConnectionThread implements Runnable {
 		System.exit(0);
 
 	}
+	
+	
 
 	private boolean isFileReadable(String fileName2) {
 		Path currentRelativePath = Paths.get("");
