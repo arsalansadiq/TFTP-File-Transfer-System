@@ -307,7 +307,7 @@ public class Client {
 					}
 					blockNum--;
 					sendReceiveSocket.receive(receivePacket);
-					newSafePort= receivePacket.getPort();
+
 					
 				}
 			}

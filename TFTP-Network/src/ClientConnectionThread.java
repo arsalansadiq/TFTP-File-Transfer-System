@@ -10,6 +10,7 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramPacket receivePacket;
 	private DatagramPacket sendDataPacket;
+	private DatagramPacket mostRecentPacket;
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
@@ -234,16 +235,16 @@ public class ClientConnectionThread implements Runnable {
 
 		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
-		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
+		 sendDataPacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
 				receivePacket.getPort());
 		try {
-			sendReceiveSocket.send(acknowledgePacket);
+			sendReceiveSocket.send(sendDataPacket);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void errorOccurred(DatagramPacket errorPacket) {
+	private void errorOccurred(DatagramPacket errorPacket) throws IOException {
 		if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1) {
 			System.out.println("Error code 1: File not found. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2) {
@@ -262,9 +263,10 @@ public class ClientConnectionThread implements Runnable {
 //						inetAddress, 23);
 //			}
 
-//			sendReceiveSocket.send(sendDataPacket);
-//			System.out.println("Sent the last packet again.");
-//			sendReceiveSocket.receive(sendDataPacket);
+			sendReceiveSocket.send(sendDataPacket);
+			System.out.println("Sent the last packet again.");
+			
+			sendReceiveSocket.receive(receivePacket);
 		}
 
 
@@ -286,10 +288,10 @@ public class ClientConnectionThread implements Runnable {
 	private void sendFirstWriteAcknowledgment() {
 		byte[] acknowledgeCode = { 0, 4, 0, 0 };
 
-		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
+		 sendDataPacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
 				receivePacket.getPort());
 		try {
-			sendReceiveSocket.send(acknowledgePacket);
+			sendReceiveSocket.send(sendDataPacket);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -360,15 +362,16 @@ public class ClientConnectionThread implements Runnable {
 		bytesRead = fis.read(readDataFromFile);
 
 		// wait for acknowledgment
-		sendReceiveSocket.receive(sendDataPacket);
-		System.out.println("Thread received packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-				+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
+		sendReceiveSocket.receive(receivePacket);
+		System.out.println("Thread received packet: " + receivePacket.getData()[0] + receivePacket.getData()[1]
+				+ " with block number " + receivePacket.getData()[2] + receivePacket.getData()[3]);
 
 		while (bytesRead != -1) {
-			byte[] blockNumberRe = { sendDataPacket.getData()[2], sendDataPacket.getData()[3] };
+			byte[] blockNumberRe = { receivePacket.getData()[2], receivePacket.getData()[3] };
 			int checkBlock = byteArrToInt(blockNumberRe);
-
-			if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
+			if(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)
+				errorOccurred(receivePacket);
+			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4
 					&& checkBlock == (blockNumber - 1)) {
 
 				System.out.println("bytes read is: " + bytesRead);
@@ -385,21 +388,17 @@ public class ClientConnectionThread implements Runnable {
 						+ " with block number " + sendDataPacket.getData()[2]);
 
 				// wait for acknowledgment
-				sendReceiveSocket.receive(sendDataPacket);
-				System.out.println("Thread received packet: " + sendDataPacket.getData()[0]
-						+ sendDataPacket.getData()[1] + " with block number " + sendDataPacket.getData()[2]);
+				sendReceiveSocket.receive(receivePacket);
+				System.out.println("Thread received packet: " + receivePacket.getData()[0]
+						+ receivePacket.getData()[1] + " with block number " + receivePacket.getData()[2]);
 
 				blockNumber++;
 				bytesRead = fis.read(readDataFromFile);
-			} else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 4
+			} else if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4
 					&& checkBlock != (blockNumber - 1)) {
 				System.out.println("DID NOT SEND ANOTHER DATA BACK");
 
-				sendReceiveSocket.receive(sendDataPacket);
-			}else if (sendDataPacket.getData()[0] == 0 && sendDataPacket.getData()[1] == 5){
-				errorOccurred(sendDataPacket);
-				
-				
+				sendReceiveSocket.receive(receivePacket);
 			}
 		}
 
