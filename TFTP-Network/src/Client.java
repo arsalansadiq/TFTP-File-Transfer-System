@@ -252,7 +252,6 @@ public class Client {
 
 	private ByteArrayOutputStream getFile() throws IOException {
 		ByteArrayOutputStream receivingBytes = new ByteArrayOutputStream();
-		int newSafePort = 0;
 		int blockNum = 0;
 		int actualBlockNum = 0;
 		byte[] blockNumber=new byte[2];
@@ -269,7 +268,20 @@ public class Client {
 			// System.out.println("client is still waiting");
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+			if (receivePacket.getPort() != hostPort) {//packet came from unkownID... discard packet, send off errorPacket
+				System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");
+				byte[] errorPacket = createErrorPacket(5, "Packet came from port: " + receivePacket.getPort() + " but expected from port: " + safePort);
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				//blockNum--;
+				sendReceiveSocket.receive(receivePacket);
 
+				
+			}
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
@@ -285,7 +297,6 @@ public class Client {
 
 					acknowledgeToHost(byteArrToInt(blockNumber));
 					sendReceiveSocket.receive(receivePacket);
-					newSafePort= receivePacket.getPort();
 					
 				}
 				else if (blockNum != actualBlockNum) {
@@ -293,22 +304,7 @@ public class Client {
 							+ actualBlockNum + ". Discarding...");
 					blockNum--;
 					sendReceiveSocket.receive(receivePacket);
-					newSafePort= receivePacket.getPort();
 					//acknowledgeToHost(byteArrToInt(blockNumber));
-				}
-				if (safePort != newSafePort) {
-					System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");
-					byte[] errorPacket = createErrorPacket(5, "Packet came from port: " + receivePacket.getPort() + " but expected from port: " + safePort);
-					sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
-					try {
-						sendReceiveSocket.send(sendErrorPacket);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					blockNum--;
-					sendReceiveSocket.receive(receivePacket);
-
-					
 				}
 			}
 
@@ -410,11 +406,10 @@ public class Client {
 
 		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
-		DatagramPacket acknowledgePacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
+		sendDataPacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
 				receivePacket.getPort());
 		try {
-			sendReceiveSocket.send(acknowledgePacket);
-			mostRecentPacket=acknowledgePacket;
+			sendReceiveSocket.send(sendDataPacket);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

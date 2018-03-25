@@ -263,14 +263,15 @@ public class ClientConnectionThread implements Runnable {
 //						inetAddress, 23);
 //			}
 
-			sendReceiveSocket.send(sendDataPacket);
+			sendReceiveSocket.send(sendDataPacket);//resend the last packet
 			System.out.println("Sent the last packet again.");
 			
-			sendReceiveSocket.receive(receivePacket);
+			sendReceiveSocket.receive(receivePacket);//wait for clients response
 		}
 
 
 		int nameLength = 0;
+		System.out.println(errorPacket.getData().length);
 		for (int i = 4; errorPacket.getData()[i] != 0; i++) {
 			nameLength++;
 		}

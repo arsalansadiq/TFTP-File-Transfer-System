@@ -158,6 +158,7 @@ public class IntermediateHost {
 				if (blockNumMatch(sendReceivePacket)) {
 					System.out.println(
 							"TD has been Changed................................................................");
+						TIDChange=false;
 
 					TIDchangeErrorSim(sendReceivePacket);
 				} else
