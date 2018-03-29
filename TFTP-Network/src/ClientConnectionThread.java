@@ -262,16 +262,33 @@ public class ClientConnectionThread implements Runnable {
 //				sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
 //						inetAddress, 23);
 //			}
+			
+			int nameLength = 0;
+			for (int i = 4; errorPacket.getData()[i] != 0; i++) {
+				nameLength++;
+			}
+
+			byte[] packetData = new byte[nameLength];
+			System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
+			String errorMessage = new String(packetData);
+
+			System.out.println(errorMessage);
+			
+			
 
 			sendReceiveSocket.send(sendDataPacket);//resend the last packet
-			System.out.println("Sent the last packet again.");
+//			System.out.println("Thread sending retry packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+//					+ " with block number " + sendDataPacket.getData()[2] + sendDataPacket.getData()[3]);
 			
-			sendReceiveSocket.receive(receivePacket);//wait for clients response
+			//sendReceiveSocket.receive(receivePacket);//wait for clients response
+			
+			
+			
+			return;
 		}
 
 
 		int nameLength = 0;
-		System.out.println(errorPacket.getData().length);
 		for (int i = 4; errorPacket.getData()[i] != 0; i++) {
 			nameLength++;
 		}
@@ -368,10 +385,17 @@ public class ClientConnectionThread implements Runnable {
 				+ " with block number " + receivePacket.getData()[2] + receivePacket.getData()[3]);
 
 		while (bytesRead != -1) {
+			if(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5){
+				errorOccurred(receivePacket);
+				sendReceiveSocket.receive(receivePacket);//wait for clients response
+//				System.out.println("Thread received response for retry packet: " + receivePacket.getData()[0] + receivePacket.getData()[1]
+//						+ " with block number " + receivePacket.getData()[2] + receivePacket.getData()[3]);
+				//blockNumber++;
+			}
+			
 			byte[] blockNumberRe = { receivePacket.getData()[2], receivePacket.getData()[3] };
 			int checkBlock = byteArrToInt(blockNumberRe);
-			if(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)
-				errorOccurred(receivePacket);
+			
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4
 					&& checkBlock == (blockNumber - 1)) {
 

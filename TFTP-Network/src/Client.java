@@ -86,10 +86,10 @@ public class Client {
 		// sending completed request to server
 		if (readWriteOPCode == 1) {
 			// receiving file from server
-			if (Files.exists(filePathWrittenTo)) {
-				System.out.println("File " + fileName + " already exists on client side.");
-				System.exit(0);
-			}
+//			if (Files.exists(filePathWrittenTo)) {
+//				System.out.println("File " + fileName + " already exists on client side.");
+//				System.exit(0);
+//			}
 
 			ByteArrayOutputStream receivingBytes = getFile();
 			writeOutReceivedFile(receivingBytes, fileName);

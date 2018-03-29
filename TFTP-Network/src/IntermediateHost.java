@@ -161,6 +161,7 @@ public class IntermediateHost {
 						TIDChange=false;
 
 					TIDchangeErrorSim(sendReceivePacket);
+					return;
 				} else
 					sendReceiveSocket.send(sendReceivePacket);
 			} else
