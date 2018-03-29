@@ -97,10 +97,8 @@ public class IntermediateHost {
 			System.out.println("Intermediate host: sending packet to client");
 			sendReceivePacket.setPort(clientPort);
 			sim();
-			// sendReceiveSocket.send(sendReceivePacket);
 			System.out.println("host sending packet to client: " + sendReceivePacket.getData()[0]
 					+ sendReceivePacket.getData()[1]);
-			// sim(sendReceivePacket);
 
 		}
 	}// handle rrq and wrq
@@ -158,7 +156,7 @@ public class IntermediateHost {
 				if (blockNumMatch(sendReceivePacket)) {
 					System.out.println(
 							"TD has been Changed................................................................");
-						TIDChange=false;
+					TIDChange = false;
 
 					TIDchangeErrorSim(sendReceivePacket);
 					return;
@@ -172,48 +170,9 @@ public class IntermediateHost {
 			sendReceiveSocket.send(sendReceivePacket);
 		}
 
-		// if (duplicateSim || delaySim || lostSim) {
-		// if ((wrqSim && data[0] == 0 && data[1] == 2) || (rrqSim && data[0] ==
-		// 0 && data[1] == 1)) {
-		// if (duplicateSim)
-		// duplicatePacketErrorSim(packet);
-		// if (delaySim)
-		// delayPacketErrorSim(packet);
-		// if (lostSim)
-		// lostPacketErrorSim(packet);
-		// } else if ((dataSim && data[0] == 0 && data[1] == 3) || (ackSim &&
-		// data[0] == 0 && data[1] == 4)) {
-		// if (duplicateSim)
-		// if (blockNumMatch(packet)) {
-		// System.out.println("Block numbers matched for duplicate");
-		// duplicatePacketErrorSim(packet);
-		// }
-		// if (delaySim)
-		// if (blockNumMatch(packet))
-		// delayPacketErrorSim(packet);
-		// if (lostSim)
-		// if (blockNumMatch(packet))
-		// lostPacketErrorSim(packet);
-		// }
-		// } else
-		// sendReceiveSocket.send(packet);
-
 	}
 
 	public void lostPacketErrorSim(DatagramPacket packet) throws IOException {
-		// byte data[] = new byte[516];
-		// data = packet.getData();
-		// data[0]=9;//change to BS number
-		// data[1]=9;
-		// data[2]=9;
-		// data[3]=9;
-		// packet.setData(data);
-		// sendReceivePacket=packet;
-		// sendReceiveSocket.send(sendReceivePacket);//send someBS numbers and then
-		// check for the acknowlegde
-		//
-		// sendReceiveSocket.receive(sendReceivePacket);
-		// sendReceiveSocket.setSoTimeout(5);
 
 		try {
 			sendReceiveSocket.setSoTimeout(5000);
@@ -240,20 +199,12 @@ public class IntermediateHost {
 	}
 
 	public void delayPacketErrorSim(DatagramPacket packet) throws InterruptedException {
-		// byte data[] = packet.getData();
-		// byte pNum[] = intToBytes(packetNum);
-		// if this is not a datagram packet return; else conduct simulation
-		// if (!(data[0] == 0 && data[1] == 3));
-		// else {
-		// if((data[1] == pNum[0] && data[2] == pNum[1]))//if this is the chosen
-		// packet
-		// to delay{
+
 		TimeUnit.SECONDS.sleep(delayTime);
-		// }
+
 	}
 
 	private void duplicatePacketErrorSim(DatagramPacket packet) throws InterruptedException, IOException {
-		// sendReceiveSocket.send(packet);
 		TimeUnit.SECONDS.sleep(delayTime);
 		sendReceiveSocket.send(packet);
 		duplicateSim = false;
@@ -293,7 +244,7 @@ public class IntermediateHost {
 				packetNum = input.nextInt();
 			}
 			break;
-		case 2:// when packetNum
+		case 2:
 			System.out.println("Which packet should be delayed: 0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
 			packetTypeToDelay = input.nextInt();
 			if (packetTypeToDelay == 2 || packetTypeToDelay == 3) {
@@ -325,8 +276,6 @@ public class IntermediateHost {
 			System.out.println("Which number DATA or ACK packet should be duplicated during transfer: ");
 			packetNum = input.nextInt();
 			break;
-
-		// new socket, different port number
 		}
 
 		input.close();

@@ -11,11 +11,10 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramPacket receivePacket;
 	private DatagramPacket sendDataPacket;
 	private DatagramPacket mostRecentPacket;
+	private int safePort;
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
-
-	// private Path filePath;
 
 	private byte[] holdReceivingArray;
 	private FileInputStream fis = null;
@@ -139,7 +138,6 @@ public class ClientConnectionThread implements Runnable {
 
 	private void writeOutReceivedFile(ByteArrayOutputStream byteArrayOutputStream, String fileNameTowrite) {
 
-		// filePath = Paths.get(currentPath+"\\Server", fileName);
 		Path currentRelativePath = Paths.get("");
 		String currentPath = currentRelativePath.toAbsolutePath().toString();
 
@@ -168,54 +166,67 @@ public class ClientConnectionThread implements Runnable {
 		int blockNum = 0;
 		int actualBlockNum = 0;
 		byte[] blockNumber = new byte[2];
-		holdReceivingArray = new byte[512]; // 516 because 512 data + 2 byte
-		// opcode + 2 byte 0's
+		holdReceivingArray = new byte[512];
 
 		receivePacket = new DatagramPacket(holdReceivingArray, holdReceivingArray.length, inetAddress,
 				sendReceiveSocket.getLocalPort());
 		sendReceiveSocket.receive(receivePacket);
+		safePort = receivePacket.getPort();
 		do {
-			// System.out.println("Packet #: " + blockNum);
+
 			blockNum++;
 
-			// System.out.println("client is waiting for packet");
-
-			// System.out.println("client is still waiting");
-
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
+			if (receivePacket.getPort() != 23) {// packet came from unkownID... discard packet, send off errorPacket
+				System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");
+				byte[] errorPacket = createErrorPacket(5,
+						"Packet came from port: " + receivePacket.getPort() + " but expected from port: " + safePort);
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, 23);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+
+				sendReceiveSocket.receive(receivePacket);
+			}
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
-			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
+				sendReceiveSocket.receive(receivePacket);
+				blockNum--;
+
+			}
+
+			if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				blockNumber[0] = holdReceivingArray[2];
 				blockNumber[1] = holdReceivingArray[3];
 				actualBlockNum = byteArrToInt(blockNumber);
 
-				System.out.println("Thread received block number: " + actualBlockNum);
+				System.out.println("Client received block number: " + actualBlockNum);
+
 				if (blockNum == actualBlockNum) {
 					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 					writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 
 					acknowledgeToHost(byteArrToInt(blockNumber));
 					sendReceiveSocket.receive(receivePacket);
-					//
 
 				} else if (blockNum != actualBlockNum) {
-					System.out.println("Thread was expecting block number: " + blockNum + " but received block number: "
+					System.out.println("Client was expecting block number: " + blockNum + " but received block number: "
 							+ actualBlockNum + ". Discarding...");
-					// blockNum = actualBlockNum+1;
 					blockNum--;
 					sendReceiveSocket.receive(receivePacket);
-					// acknowledgeToHost(byteArrToInt(blockNumber));
-					// System.out.println("Thread blockNum is: " + blockNum);
 				}
 			}
 
-		} while (!(receivePacket.getLength() < 512));
+		} while (!(receivePacket.getLength() < 512) || (receivePacket.getData()[1] == 5));
+
 		if (receivePacket.getLength() != 0) {
 			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
-			System.out.println("Thread received block number: " + (actualBlockNum + 1));
+			blockNum++;
+			System.out.println("Client received block number: " + blockNum);
 			acknowledgeToHost(byteArrToInt(blockNumber));
 		}
 		return receivingBytes;
@@ -255,15 +266,6 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Error code 6: File already exists. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 5) {
 			System.out.println("Error code 5: Unknown TID. The error message is: ");
-			// if (bytesRead == 508) {
-			// sendDataPacket = new DatagramPacket(createDataPacket(blockNumber,
-			// readDataFromFile),
-			// readDataFromFile.length + 4, inetAddress, 23);
-			// } else {
-			// sendDataPacket = new DatagramPacket(createDataPacket(blockNumber,
-			// readDataFromFile), bytesRead + 4,
-			// inetAddress, 23);
-			// }
 
 			int nameLength = 0;
 			for (int i = 4; errorPacket.getData()[i] != 0; i++) {
@@ -277,12 +279,6 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println(errorMessage);
 
 			sendReceiveSocket.send(sendDataPacket);// resend the last packet
-			// System.out.println("Thread sending retry packet: " +
-			// sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
-			// + " with block number " + sendDataPacket.getData()[2] +
-			// sendDataPacket.getData()[3]);
-
-			// sendReceiveSocket.receive(receivePacket);//wait for clients response
 
 			return;
 		}
@@ -393,7 +389,6 @@ public class ClientConnectionThread implements Runnable {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-				// blockNum--;
 				sendReceiveSocket.receive(receivePacket);
 
 			}
@@ -401,11 +396,6 @@ public class ClientConnectionThread implements Runnable {
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
 				errorOccurred(receivePacket);
 				sendReceiveSocket.receive(receivePacket);// wait for clients response
-				// System.out.println("Thread received response for retry packet: " +
-				// receivePacket.getData()[0] + receivePacket.getData()[1]
-				// + " with block number " + receivePacket.getData()[2] +
-				// receivePacket.getData()[3]);
-				// blockNumber++;
 			}
 
 			byte[] blockNumberRe = { receivePacket.getData()[2], receivePacket.getData()[3] };
