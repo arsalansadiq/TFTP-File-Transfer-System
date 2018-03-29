@@ -282,9 +282,15 @@ public class Client {
 
 				
 			}
+			
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
-			} else if (requestCode[1] == 3) { // 3 is opcode for data in packet
+				sendReceiveSocket.receive(receivePacket);
+				blockNum--;
+				
+			} 
+			
+			if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				 blockNumber[0]=  holdReceivingArray[2];
 				 blockNumber[1]=holdReceivingArray[3] ;
 				actualBlockNum = byteArrToInt(blockNumber);
@@ -307,8 +313,9 @@ public class Client {
 					//acknowledgeToHost(byteArrToInt(blockNumber));
 				}
 			}
+			
 
-		} while (!(receivePacket.getLength() < 512));
+		} while (!(receivePacket.getLength() < 512) || (receivePacket.getData()[1] == 5));
 		
 		if(receivePacket.getLength()!=0) {
 			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
@@ -356,7 +363,7 @@ public class Client {
 
 	}
 
-	private void errorOccurred(DatagramPacket errorPacket) {
+	private void errorOccurred(DatagramPacket errorPacket) throws IOException {
 		if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 1) {
 			System.out.println("Error code 1: File not found. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 2) {
@@ -365,23 +372,38 @@ public class Client {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
-		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
-			String errorStr=new String (errorPacket.getData());
-			char errorChar=errorStr.charAt(1);
-			byte errorByte=(byte)errorChar;
-			if((mostRecentPacket.getData()[1]+0x30)==errorByte) {
-			try {
-				sendReceiveSocket.send(mostRecentPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 5) {
+			System.out.println("Error code 5: Unknown TID. The error message is: ");
+			// if (bytesRead == 508) {
+			// sendDataPacket = new DatagramPacket(createDataPacket(blockNumber,
+			// readDataFromFile),
+			// readDataFromFile.length + 4, inetAddress, 23);
+			// } else {
+			// sendDataPacket = new DatagramPacket(createDataPacket(blockNumber,
+			// readDataFromFile), bytesRead + 4,
+			// inetAddress, 23);
+			// }
+
+			int nameLength = 0;
+			for (int i = 4; errorPacket.getData()[i] != 0; i++) {
+				nameLength++;
 			}
-			}
-			else {
-				//terminate and delete the partial file
-			}
-			//wrong type of packet type was received on the server side, first two characters identify expected packet type
-			//if most recent packet sent matches the type, resend... else terminate transfer and delete partial file.
-			
+
+			byte[] packetData = new byte[nameLength];
+			System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
+			String errorMessage = new String(packetData);
+
+			System.out.println(errorMessage);
+
+			sendReceiveSocket.send(sendDataPacket);// resend the last packet
+			// System.out.println("Thread sending retry packet: " +
+			// sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+			// + " with block number " + sendDataPacket.getData()[2] +
+			// sendDataPacket.getData()[3]);
+
+			// sendReceiveSocket.receive(receivePacket);//wait for clients response
+
+			return;
 		}
 
 		int nameLength = 0;
@@ -394,7 +416,6 @@ public class Client {
 		String errorMessage = new String(packetData);
 
 		System.out.println(errorMessage);
-		System.exit(0);
 
 	}
 
