@@ -30,8 +30,7 @@ public class ThreadedServer {
 				System.out.println("Server: waiting to receive a packet");
 				// receiveSocket.setSoTimeout(30000);
 				receiveSocket.receive(receivePacket); // wait for a packet
-				// System.out.println("Server: receivePacket is: "+new
-				// String(receivePacket.getData()));
+
 				receive = new String(receivePacket.getData());
 				System.out.println("Server: packet received");
 			} catch (IOException e) { // throws exception
