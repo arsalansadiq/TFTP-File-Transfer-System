@@ -12,6 +12,10 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramPacket sendDataPacket;
 	private DatagramPacket mostRecentPacket;
 	private int safePort;
+<<<<<<< HEAD
+=======
+	private final int hostPort=23;
+>>>>>>> JeffBranch-iter4
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
@@ -190,6 +194,7 @@ public class ClientConnectionThread implements Runnable {
 
 				sendReceiveSocket.receive(receivePacket);
 			}
+<<<<<<< HEAD
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
@@ -198,6 +203,30 @@ public class ClientConnectionThread implements Runnable {
 
 			}
 
+=======
+			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 3)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
+				
+				// neither an ack nor an error message therefore packet error 
+								System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
+								byte[] errorPacket = createErrorPacket(4,
+										"PACKET ERROR--EXPETING DATA code:03--BUT RECEIVED code:" + receivePacket.getData()[1]);
+								sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+								try {
+									sendReceiveSocket.send(sendErrorPacket);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+								sendReceiveSocket.receive(receivePacket);
+
+							}
+			if (requestCode[0] == 0 && requestCode[1] == 5) {
+				errorOccurred(receivePacket);
+				sendReceiveSocket.receive(receivePacket);
+				blockNum--;
+
+			}
+
+>>>>>>> JeffBranch-iter4
 			if (requestCode[1] == 3) { // 3 is opcode for data in packet
 				blockNumber[0] = holdReceivingArray[2];
 				blockNumber[1] = holdReceivingArray[3];
@@ -235,6 +264,7 @@ public class ClientConnectionThread implements Runnable {
 	private int byteArrToInt(byte[] blockNumber) {
 
 		return ((byte) (blockNumber[0] & 0xFF) | (byte) ((blockNumber[1] >> 8) & 0xFF));
+<<<<<<< HEAD
 
 	}
 
@@ -244,6 +274,17 @@ public class ClientConnectionThread implements Runnable {
 		blockNumArray[0] = (byte) (blockNum & 0xFF);
 		blockNumArray[1] = (byte) ((blockNum >> 8) & 0xFF);
 
+=======
+
+	}
+
+	private void acknowledgeToHost(int blockNum) {
+		byte[] blockNumArray = new byte[2];
+
+		blockNumArray[0] = (byte) (blockNum & 0xFF);
+		blockNumArray[1] = (byte) ((blockNum >> 8) & 0xFF);
+
+>>>>>>> JeffBranch-iter4
 		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
 		sendDataPacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
@@ -264,6 +305,26 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+<<<<<<< HEAD
+=======
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
+			System.out.println("Error code 4: Packet Error. The error message is: ");
+
+			int nameLength = 0;
+			for (int i = 4; errorPacket.getData()[i] != 0; i++) {
+				nameLength++;
+			}
+
+			byte[] packetData = new byte[nameLength];
+			System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
+			String errorMessage = new String(packetData);
+
+			System.out.println(errorMessage);
+
+			sendReceiveSocket.send(sendDataPacket);// resend the last packet
+
+			return;
+>>>>>>> JeffBranch-iter4
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 5) {
 			System.out.println("Error code 5: Unknown TID. The error message is: ");
 
@@ -388,11 +449,36 @@ public class ClientConnectionThread implements Runnable {
 					sendReceiveSocket.send(sendErrorPacket);
 				} catch (IOException e1) {
 					e1.printStackTrace();
+<<<<<<< HEAD
 				}
 				sendReceiveSocket.receive(receivePacket);
 
 			}
 
+			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
+				errorOccurred(receivePacket);
+				sendReceiveSocket.receive(receivePacket);// wait for clients response
+=======
+				}
+				sendReceiveSocket.receive(receivePacket);
+
+			}
+			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 4)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
+				
+// neither an ack nor an error message therefore packet error 
+				System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
+				byte[] errorPacket = createErrorPacket(4,
+						"PACKET ERROR--EXPETING ACK code:04--BUT RECEIVED code:" + receivePacket.getData()[1]);
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				sendReceiveSocket.receive(receivePacket);
+
+>>>>>>> JeffBranch-iter4
+			}
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
 				errorOccurred(receivePacket);
 				sendReceiveSocket.receive(receivePacket);// wait for clients response
@@ -416,6 +502,27 @@ public class ClientConnectionThread implements Runnable {
 				System.out.println("Thread sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
 						+ " with block number " + sendDataPacket.getData()[2]);
 
+<<<<<<< HEAD
+			byte[] blockNumberRe = { receivePacket.getData()[2], receivePacket.getData()[3] };
+			int checkBlock = byteArrToInt(blockNumberRe);
+
+			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4 && checkBlock == (blockNumber - 1)) {
+
+				System.out.println("bytes read is: " + bytesRead);
+				if (bytesRead == 508) {
+					sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
+							readDataFromFile.length + 4, inetAddress, 23);
+				} else {
+					sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile), bytesRead + 4,
+							inetAddress, 23);
+				}
+
+				sendReceiveSocket.send(sendDataPacket);
+				System.out.println("Thread sent packet: " + sendDataPacket.getData()[0] + sendDataPacket.getData()[1]
+						+ " with block number " + sendDataPacket.getData()[2]);
+
+=======
+>>>>>>> JeffBranch-iter4
 				// wait for acknowledgment
 				sendReceiveSocket.receive(receivePacket);
 				System.out.println("Thread received packet: " + receivePacket.getData()[0] + receivePacket.getData()[1]

@@ -62,7 +62,11 @@ public class Client {
 				fis = new FileInputStream(new File(currentPath + "\\Client", fileName));
 			} catch (FileNotFoundException e) {
 				System.out
+<<<<<<< HEAD
 						.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
+=======
+				.println("File " + fileName + " not found on client side at path " + currentPath + "\\Client");
+>>>>>>> JeffBranch-iter4
 				System.exit(0);
 			}
 
@@ -148,7 +152,11 @@ public class Client {
 
 		while (bytesRead != -1) {
 
+<<<<<<< HEAD
 			if (receivePacket.getPort() != 23) {// packet came from unkownID... discard packet, send off errorPacket
+=======
+			if (receivePacket.getPort() != hostPort) {// packet came from unkownID... discard packet, send off errorPacket
+>>>>>>> JeffBranch-iter4
 				System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");
 				byte[] errorPacket = createErrorPacket(5,
 						"Packet came from port: " + receivePacket.getPort() + " but expected from port: " + 23);
@@ -161,6 +169,7 @@ public class Client {
 				// blockNum--;
 				sendReceiveSocket.receive(receivePacket);
 
+<<<<<<< HEAD
 			}
 
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
@@ -173,6 +182,32 @@ public class Client {
 
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4 && checkBlock == (blockNumber - 1)) {
 
+=======
+			}
+			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 4)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
+				//the packet is not a data packet and is not a error packet... therefore there is a packet error
+				System.out.println("PACKET ERROR OCCURED--EXPECTING ACKNOWLEDGEMENT--SENDING ERROR PACKET");
+				byte[] errorPacket = createErrorPacket(4,
+						"Packet type: " + receivePacket.getData()[1] + " but expected acknowledgement packet");
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				sendReceiveSocket.receive(receivePacket);//wait for proper packet
+			}
+			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
+				errorOccurred(receivePacket);
+				sendReceiveSocket.receive(receivePacket);// wait for clients response
+			}
+
+			byte[] blockNumberRe = { receivePacket.getData()[2], receivePacket.getData()[3] };
+			int checkBlock = byteArrToInt(blockNumberRe);
+
+			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4 && checkBlock == (blockNumber - 1)) {
+
+>>>>>>> JeffBranch-iter4
 				System.out.println("bytes read is: " + bytesRead);
 				if (bytesRead == 508) {
 					sendDataPacket = new DatagramPacket(createDataPacket(blockNumber, readDataFromFile),
@@ -276,7 +311,11 @@ public class Client {
 
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 			if (receivePacket.getPort() != hostPort) {// packet came from unkownID... discard packet, send off
+<<<<<<< HEAD
 														// errorPacket
+=======
+				// errorPacket
+>>>>>>> JeffBranch-iter4
 				System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");
 				byte[] errorPacket = createErrorPacket(5,
 						"Packet came from port: " + receivePacket.getPort() + " but expected from port: " + safePort);
@@ -288,6 +327,7 @@ public class Client {
 				}
 				sendReceiveSocket.receive(receivePacket);
 			}
+<<<<<<< HEAD
 
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
@@ -301,6 +341,34 @@ public class Client {
 				blockNumber[1] = holdReceivingArray[3];
 				actualBlockNum = byteArrToInt(blockNumber);
 
+=======
+			if(!(requestCode[0]==0 && requestCode[1] == 3)&&!(requestCode[0] == 0 && requestCode[1] == 5)){
+				//the packet is not a data packet and is not a error packet... therefore there is a packet error
+				System.out.println("PACKET ERROR OCCURED--EXPECTING DATA--SENDING ERROR PACKET");
+				byte[] errorPacket = createErrorPacket(4,
+						"Packet type: " + receivePacket.getData()[1] + " but expected data packet");
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				//?????blockNum--;
+				sendReceiveSocket.receive(receivePacket);//wait for proper packet
+			}
+			if (requestCode[0] == 0 && requestCode[1] == 5) {
+				errorOccurred(receivePacket);
+				sendReceiveSocket.receive(receivePacket);
+				blockNum--;
+
+			}
+
+			if (requestCode[0]==0 && requestCode[1] == 3) { // 3 is opcode for data in packet
+				blockNumber[0] = holdReceivingArray[2];
+				blockNumber[1] = holdReceivingArray[3];
+				actualBlockNum = byteArrToInt(blockNumber);
+
+>>>>>>> JeffBranch-iter4
 				System.out.println("Client received block number: " + actualBlockNum);
 
 				if (blockNum == actualBlockNum) {
@@ -316,10 +384,16 @@ public class Client {
 					blockNum--;
 					sendReceiveSocket.receive(receivePacket);
 				}
+<<<<<<< HEAD
 			}
 
 		} while (!(receivePacket.getLength() < 512) || (receivePacket.getData()[1] == 5));
 
+=======
+			}			
+		} while (!(receivePacket.getLength() < 512) || (receivePacket.getData()[1] == 5));
+
+>>>>>>> JeffBranch-iter4
 		if (receivePacket.getLength() != 0) {
 			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
@@ -375,6 +449,26 @@ public class Client {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+<<<<<<< HEAD
+=======
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
+			System.out.println("Error code 4: Packet Error. The error message is: ");
+
+			int nameLength = 0;
+			for (int i = 4; errorPacket.getData()[i] != 0; i++) {
+				nameLength++;
+			}
+
+			byte[] packetData = new byte[nameLength];
+			System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
+			String errorMessage = new String(packetData);
+
+			System.out.println(errorMessage);
+
+			sendReceiveSocket.send(sendDataPacket);// resend the last packet
+
+			return;
+>>>>>>> JeffBranch-iter4
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 5) {
 			System.out.println("Error code 5: Unknown TID. The error message is: ");
 
@@ -412,9 +506,15 @@ public class Client {
 
 		blockNumArray[0] = (byte) (blockNum & 0xFF);
 		blockNumArray[1] = (byte) ((blockNum >> 8) & 0xFF);
+<<<<<<< HEAD
 
 		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
 
+=======
+
+		byte[] acknowledgeCode = { 0, 4, blockNumArray[0], blockNumArray[1] };
+
+>>>>>>> JeffBranch-iter4
 		sendDataPacket = new DatagramPacket(acknowledgeCode, acknowledgeCode.length, inetAddress,
 				receivePacket.getPort());
 		try {
