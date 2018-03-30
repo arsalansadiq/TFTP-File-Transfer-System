@@ -41,7 +41,11 @@ public class ThreadedServer {
 
 			if (receive.equals(receiveOld)) {
 				System.out.println("Server: Duplicate read or write request received. Discarding...");
-			} else {
+			}else if(!(receivePacket.getData()[0]==0 && (receivePacket.getData()[0]==1 || receivePacket.getData()[0]==2))){ 
+				System.out.println("Invalid connection request recieved");
+				
+			}
+			else {
 				Runnable newClient = new ClientConnectionThread(receivePacket);
 				new Thread(newClient).start();
 			}

@@ -12,6 +12,7 @@ public class ClientConnectionThread implements Runnable {
 	private DatagramPacket sendDataPacket;
 	private DatagramPacket mostRecentPacket;
 	private int safePort;
+	private final int hostPort=23;
 	private InetAddress inetAddress = null;
 	int receivePort = 88;
 	private byte data[];
@@ -190,7 +191,21 @@ public class ClientConnectionThread implements Runnable {
 
 				sendReceiveSocket.receive(receivePacket);
 			}
+			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 3)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
+				
+				// neither an ack nor an error message therefore packet error 
+								System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
+								byte[] errorPacket = createErrorPacket(4,
+										"PACKET ERROR--EXPETING DATA code:03--BUT RECEIVED code:" + receivePacket.getData()[1]);
+								sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+								try {
+									sendReceiveSocket.send(sendErrorPacket);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+								sendReceiveSocket.receive(receivePacket);
 
+							}
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 				sendReceiveSocket.receive(receivePacket);
@@ -264,6 +279,23 @@ public class ClientConnectionThread implements Runnable {
 			System.out.println("Error code 3: Disk full or allocation exceeded. The error message is: ");
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 6) {
 			System.out.println("Error code 6: File already exists. The error message is: ");
+		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 4) {
+			System.out.println("Error code 4: Packet Error. The error message is: ");
+
+			int nameLength = 0;
+			for (int i = 4; errorPacket.getData()[i] != 0; i++) {
+				nameLength++;
+			}
+
+			byte[] packetData = new byte[nameLength];
+			System.arraycopy(errorPacket.getData(), 4, packetData, 0, nameLength);
+			String errorMessage = new String(packetData);
+
+			System.out.println(errorMessage);
+
+			sendReceiveSocket.send(sendDataPacket);// resend the last packet
+
+			return;
 		} else if (errorPacket.getData()[2] == 0 && errorPacket.getData()[3] == 5) {
 			System.out.println("Error code 5: Unknown TID. The error message is: ");
 
@@ -392,7 +424,21 @@ public class ClientConnectionThread implements Runnable {
 				sendReceiveSocket.receive(receivePacket);
 
 			}
+			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 4)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
+				
+// neither an ack nor an error message therefore packet error 
+				System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
+				byte[] errorPacket = createErrorPacket(4,
+						"PACKET ERROR--EXPETING ACK code:04--BUT RECEIVED code:" + receivePacket.getData()[1]);
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				sendReceiveSocket.receive(receivePacket);
 
+			}
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
 				errorOccurred(receivePacket);
 				sendReceiveSocket.receive(receivePacket);// wait for clients response
