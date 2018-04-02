@@ -24,7 +24,11 @@ public class Client {
 	private String fileName, fileNameToWrite;
 	private int safePort;
 	private FileInputStream fis = null;
-	String currentPath;
+	String currentPath, IPAddress, dir;
+	
+	int normOrTest = 0;
+	int verboseOrQuiet = 1;
+	int def;
 
 	private DatagramPacket sendErrorPacket;
 
@@ -48,6 +52,23 @@ public class Client {
 
 		Path currentRelativePath = Paths.get("");
 		currentPath = currentRelativePath.toAbsolutePath().toString();
+		
+		System.out.println("0: Edit settings (normal vs. test, verbose vs. quiet, IP address of server, client/server directory) or 1: for Default");
+		def = input.nextInt();
+		if (def == 1) {
+		
+		System.out.println("0: Normal, 1: Test");
+		normOrTest = input.nextInt();
+		
+		System.out.println("0: Verbose, 1: Quiet");
+		verboseOrQuiet = input.nextInt();
+		
+		System.out.println("Enter IP address of server:");
+		IPAddress = input.next();
+		
+		System.out.println("Enter client/server directory or type default:");
+		dir = input.next();
+		}
 
 		input.close();
 		filePathWrittenTo = Paths.get(currentPath + "\\Client", fileName);
@@ -68,6 +89,7 @@ public class Client {
 
 		}
 
+		
 		serverRequest = createServerRequest(readWriteOPCode, fileName, "netascii");
 
 		sendPacket = new DatagramPacket(serverRequest, serverRequest.length, inetAddress, hostPort);

@@ -41,9 +41,11 @@ public class ThreadedServer {
 
 			if (receive.equals(receiveOld)) {
 				System.out.println("Server: Duplicate read or write request received. Discarding...");
-			}else if(!(receivePacket.getData()[0]==0 && (receivePacket.getData()[0]==1 || receivePacket.getData()[0]==2))){ 
+			}else if(!(receivePacket.getData()[0]==0 && (receivePacket.getData()[1]==1 || receivePacket.getData()[1]==2))){ 
 				System.out.println("Invalid connection request recieved");
 				
+			}else if(!(getFileName(receivePacket).equals("netascii") || getFileName(receivePacket).equals("octet"))) {
+				System.out.println("Invalid mode recieved");
 			}
 			else {
 				Runnable newClient = new ClientConnectionThread(receivePacket);
@@ -55,6 +57,17 @@ public class ThreadedServer {
 
 	public void close() {
 		receiveSocket.close();
+	}
+	
+	private String getFileName(DatagramPacket fileNamePacket) {
+		int nameLength = 0;
+		for (int i = 2; fileNamePacket.getData()[i] != 0; i++) {
+			nameLength++;
+		}
+
+		byte[] packetData = new byte[nameLength];
+		System.arraycopy(receivePacket.getData(), 2, packetData, 0, nameLength);
+		return new String(packetData);
 	}
 
 	public static void main(String[] args) {
