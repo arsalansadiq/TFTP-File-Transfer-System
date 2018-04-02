@@ -44,9 +44,9 @@ public class ThreadedServer {
 			}else if(!(receivePacket.getData()[0]==0 && (receivePacket.getData()[1]==1 || receivePacket.getData()[1]==2))){ 
 				System.out.println("Invalid connection request recieved");
 				
-			}else if(!(getFileName(receivePacket).equals("netascii") || getFileName(receivePacket).equals("octet"))) {
+			}/*else if(!(getFileName(receivePacket).equals("netascii") || getFileName(receivePacket).equals("octet"))) {
 				System.out.println("Invalid mode recieved");
-			}
+			}*/
 			else {
 				Runnable newClient = new ClientConnectionThread(receivePacket);
 				new Thread(newClient).start();

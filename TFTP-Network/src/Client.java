@@ -25,7 +25,7 @@ public class Client {
 	private int safePort;
 	private FileInputStream fis = null;
 	String currentPath, IPAddress, dir;
-	
+
 	int normOrTest = 0;
 	int verboseOrQuiet = 1;
 	int def;
@@ -52,25 +52,25 @@ public class Client {
 
 		Path currentRelativePath = Paths.get("");
 		currentPath = currentRelativePath.toAbsolutePath().toString();
-		
+
 		System.out.println("0: Edit settings (normal vs. test, verbose vs. quiet, IP address of server, client/server directory) or 1: for Default");
 		def = input.nextInt();
 		if (def == 1) {
-		
-		System.out.println("0: Normal, 1: Test");
-		normOrTest = input.nextInt();
-		
-		System.out.println("0: Verbose, 1: Quiet");
-		verboseOrQuiet = input.nextInt();
-		
-		System.out.println("Enter IP address of server:");
-		IPAddress = input.next();
-		
-		System.out.println("Enter client/server directory or type default:");
-		dir = input.next();
+
+			System.out.println("0: Normal, 1: Test");
+			normOrTest = input.nextInt();
+
+			System.out.println("0: Verbose, 1: Quiet");
+			verboseOrQuiet = input.nextInt();
+
+			System.out.println("Enter IP address of server:");
+			IPAddress = input.next();
+
+			System.out.println("Enter client/server directory or type default:");
+			dir = input.next();
 		}
 
-		input.close();
+		//input.close();
 		filePathWrittenTo = Paths.get(currentPath + "\\Client", fileName);
 
 		if (readWriteOPCode == 2) {
@@ -89,7 +89,7 @@ public class Client {
 
 		}
 
-		
+
 		serverRequest = createServerRequest(readWriteOPCode, fileName, "netascii");
 
 		sendPacket = new DatagramPacket(serverRequest, serverRequest.length, inetAddress, hostPort);
@@ -506,13 +506,24 @@ public class Client {
 			System.out.println("Out of memory on client side. Exiting.");
 			System.exit(0);
 		}
-		System.out.println("Finished read transfer. Exiting.");
-		System.exit(0);
+		System.out.println("Finished read transfer.");
+		//System.exit(0);
+		
 	}
 
 	public static void main(String[] args) throws IOException {
+		Scanner redoInput = new Scanner(System.in);
+		
+		String input;
 		Client client = new Client();
-		client.setup();
+		do {
+			client.setup();
+			System.out.println("Would you like to initiate another file transfer? (Y)es or (N)o ");
+			 input = redoInput.nextLine();
+		}while(input.equalsIgnoreCase("Y"));
+		System.out.println("Exiting....");
+		System.exit(0);
+		
 	}
 
 }
