@@ -17,8 +17,12 @@ public class IntermediateHost {
 	private boolean dataSim = false;
 	private boolean ackSim = false;
 	private boolean TIDChange = false;
+	private boolean invalidatePacket=false;
+	private boolean invalidateMode=false;
+	private boolean changeBlockNum=false;
+	private boolean packetError=false;
 	private int packetNum;// this will be the packet number to be used for the
-							// given error simulation
+	// given error simulation
 	private int delayTime;
 
 	public IntermediateHost() {
@@ -165,8 +169,46 @@ public class IntermediateHost {
 			} else
 				sendReceiveSocket.send(sendReceivePacket);
 		}
+		if(packetError) {//user wants to simulate a packet error either blockNum change, invalid mode, or invalid packet
+			//check if user wants to invalidate packet
+			if(invalidatePacket) {
+				//invalidate rrq or wrq... or data or acknowledge
+				if(((data[0]==0 && (data[1]==0 || data[1]==1))&& (packetNum==-2||packetNum==-3)) ||/* <-- invalidate rrq or wrq*/
+						((data[0]==0&&data[1]==3||data[0]==0 && data[1]==4)&&blockNumMatch(sendReceivePacket))){/*<-- invalidate data or ack*/ 
+					data[1]=7;//this is an invalid opcode packet now invalid
+					sendReceivePacket.setLength(data.length);	
+					sendReceivePacket.setData(data);
+					invalidatePacket=false;
+				}
 
-		if (!duplicateSim && !delaySim && !lostSim && !TIDChange) {
+			}
+			//check if user wants to invalidate mode
+			else if(invalidateMode) {
+				if(data[0]==0 &&(data[1]==1||data[1]==0)) {//if its a rrq or wrq and invalidateMode is true then change mode to be false
+					data[0]=data[0];
+					data[1]=data[1];
+					for(int i =0;i<data.length;i++) {
+						if(i>1)
+							data[i]=1;
+					}
+					sendReceivePacket.setData(data);
+					invalidateMode=false;
+				}
+			}
+			//check if user wants to invalidate blockNum
+			else if(changeBlockNum) {
+				if((data[0]==0&&data[1]==3||data[0]==0 && data[1]==4)&&blockNumMatch(sendReceivePacket)){/*<-- invalidate data or ack*/ //if its a ack or data pack and blocknum matches then change blocknum
+					if(data[3]!=1) 
+						data[3]=1;//if this part of the block num does not equal 1 set it to 1
+					else
+						data[3]=2;//if this part of the block num =1 set it to 2
+					sendReceivePacket.setData(data);
+					changeBlockNum=false;
+				}
+			}
+			sendReceiveSocket.send(sendReceivePacket);
+		}
+		if (!duplicateSim && !delaySim && !lostSim && !TIDChange && !packetError) {
 			sendReceiveSocket.send(sendReceivePacket);
 		}
 
@@ -233,7 +275,8 @@ public class IntermediateHost {
 		int packetTypeToDuplicate = -1;
 		int packetTypeToDelay = -1;
 		int packetTypeToTID = -1;
-
+		int packetTypeToInvalidate=-1;
+		int invalidateResponse=-1;
 		switch (chosenOperation) {
 
 		case 1:
@@ -267,6 +310,34 @@ public class IntermediateHost {
 
 		case 4:
 			// packet error
+
+			System.out.println("Which packet type would you like to invalidate\n0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
+			packetTypeToInvalidate=input.nextInt();
+			if(packetTypeToInvalidate==1||packetTypeToInvalidate==0) {
+				System.out.println("Would you like to make the request mode invalid?\n 0:Yes 1:No");
+				invalidateResponse=input.nextInt();
+				if(invalidateResponse==0) {
+					invalidateMode=true;
+				}
+			}
+			if(!(invalidateMode)&&(packetTypeToInvalidate==2 || packetTypeToInvalidate==3)) {
+				System.out.println("Would you like to change a block number?\n 0:Yes 1:No");
+				invalidateResponse=input.nextInt();
+				if(invalidateResponse==0) {
+					changeBlockNum=true;
+					System.out.println("Which block number would you like to change");
+					packetNum=input.nextInt();
+				}
+				packetNum=input.nextInt();
+			}
+			if(!invalidateMode && !changeBlockNum) {
+				System.out.println("The default operation is to make a packet invalid.");
+				invalidatePacket=true;
+				System.out.println("Which packet number would you like to make invalid\n"
+						+ "(-2 for readRequest, -3 for writeRequest)");
+				packetNum=input.nextInt();
+
+			}
 			break;
 
 		case 5:
@@ -294,6 +365,8 @@ public class IntermediateHost {
 			delaySim = true;
 		if (chosenOperation == 3)
 			duplicateSim = true;
+		if(chosenOperation==4)
+			packetError=true;
 		if (chosenOperation == 5)
 			TIDChange = true;
 
