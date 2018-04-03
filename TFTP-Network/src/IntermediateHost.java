@@ -173,36 +173,52 @@ public class IntermediateHost {
 			//check if user wants to invalidate packet
 			if(invalidatePacket) {
 				//invalidate rrq or wrq... or data or acknowledge
-				if(((data[0]==0 && (data[1]==0 || data[1]==1))&& (packetNum==-2||packetNum==-3)) ||/* <-- invalidate rrq or wrq*/
+				if(((data[0]==0 && (data[1]==2 || data[1]==1))&& (packetNum<-1)) ||/* <-- invalidate rrq or wrq*/
 						((data[0]==0&&data[1]==3||data[0]==0 && data[1]==4)&&blockNumMatch(sendReceivePacket))){/*<-- invalidate data or ack*/ 
-					data[1]=7;//this is an invalid opcode packet now invalid
-					sendReceivePacket.setLength(data.length);	
-					sendReceivePacket.setData(data);
+					byte[] tempData=sendReceivePacket.getData();
+					tempData[1]=7;//this is an invalid opcode packet now invalid
+
+					sendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
+					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Invalidating Packet~~~~~~~~~~~~~~~~~~~~~~~~");
+
 					invalidatePacket=false;
 				}
 
 			}
 			//check if user wants to invalidate mode
 			else if(invalidateMode) {
-				if(data[0]==0 &&(data[1]==1||data[1]==0)) {//if its a rrq or wrq and invalidateMode is true then change mode to be false
-					data[0]=data[0];
-					data[1]=data[1];
+				if(data[0]==0 &&(data[1]==1||data[1]==2)) {//if its a rrq or wrq and invalidateMode is true then change mode to be false
+
+					byte[] tempData=sendReceivePacket.getData();
+					
 					for(int i =0;i<data.length;i++) {
 						if(i>1)
-							data[i]=1;
+							tempData[i]=1;
 					}
-					sendReceivePacket.setData(data);
+					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Invalidating Mode~~~~~~~~~~~~~~~~~~~~~~~~");
+					sendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
 					invalidateMode=false;
 				}
 			}
 			//check if user wants to invalidate blockNum
 			else if(changeBlockNum) {
 				if((data[0]==0&&data[1]==3||data[0]==0 && data[1]==4)&&blockNumMatch(sendReceivePacket)){/*<-- invalidate data or ack*/ //if its a ack or data pack and blocknum matches then change blocknum
-					if(data[3]!=1) 
-						data[3]=1;//if this part of the block num does not equal 1 set it to 1
+					byte[] tempData=sendReceivePacket.getData();
+					System.out.println("Block num before change"+sendReceivePacket.getData()[3]+"tempdata[3]="+tempData[3]);
+					if(tempData[2]!=1)
+						tempData[2]=1;
 					else
-						data[3]=2;//if this part of the block num =1 set it to 2
-					sendReceivePacket.setData(data);
+						tempData[2]=2;
+					if(tempData[3]!=1)
+						tempData[3]=1;
+					else
+						tempData[3]=2;
+			//		if()//coming from server
+					sendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
+			//		if()//co,ing from client
+					//	sendReceivePacket=new DatagramPacket(tempData, tempData.length, you're awesome, threadPort);
+					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Changing Block num~~~~~~~~~~~~~~~~~~~~~~~~");
+					System.out.println("Block num after change"+sendReceivePacket.getData()[3]);
 					changeBlockNum=false;
 				}
 			}
@@ -310,7 +326,7 @@ public class IntermediateHost {
 
 		case 4:
 			// packet error
-
+ 
 			System.out.println("Which packet type would you like to invalidate\n0: RRQ, 1: WRQ, 2: DATA, or 3: ACK");
 			packetTypeToInvalidate=input.nextInt();
 			if(packetTypeToInvalidate==1||packetTypeToInvalidate==0) {
@@ -328,13 +344,12 @@ public class IntermediateHost {
 					System.out.println("Which block number would you like to change");
 					packetNum=input.nextInt();
 				}
-				packetNum=input.nextInt();
 			}
 			if(!invalidateMode && !changeBlockNum) {
 				System.out.println("The default operation is to make a packet invalid.");
 				invalidatePacket=true;
 				System.out.println("Which packet number would you like to make invalid\n"
-						+ "(-2 for readRequest, -3 for writeRequest)");
+						+ "(-2 for readRequest or writeRequest)");
 				packetNum=input.nextInt();
 
 			}
