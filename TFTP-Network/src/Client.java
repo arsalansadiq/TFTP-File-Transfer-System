@@ -55,13 +55,14 @@ public class Client {
 
 		System.out.println("0: Edit settings (normal vs. test, verbose vs. quiet, IP address of server, client/server directory) or 1: for Default");
 		def = input.nextInt();
-		if (def == 1) {
+		if (def == 0) {
 
 			System.out.println("0: Normal, 1: Test");
 			normOrTest = input.nextInt();
 
 			System.out.println("0: Verbose, 1: Quiet");
 			verboseOrQuiet = input.nextInt();
+			
 
 			System.out.println("Enter IP address of server:");
 			IPAddress = input.next();
@@ -126,7 +127,7 @@ public class Client {
 					holdReceivingArray[3] };
 
 			if (buffer[0] == 0 && buffer[1] == 4 && buffer[2] == 0 && buffer[3] == 0) {
-				System.out.println("Acknowledgment received for our write request, now beginning to write to server.");
+				verboseTrue("Acknowledgment received for our write request, now beginning to write to server.");
 				safePort = receivePacket.getPort();
 				beginWritingToServer();
 			}
@@ -348,7 +349,7 @@ public class Client {
 				blockNumber[1] = holdReceivingArray[3];
 				actualBlockNum = byteArrToInt(blockNumber);
 
-				System.out.println("Client received block number: " + actualBlockNum);
+				verboseTrue("Client received block number: " + actualBlockNum);
 
 				if (blockNum == actualBlockNum) {
 					DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
@@ -370,7 +371,7 @@ public class Client {
 			DataOutputStream writeOutBytes = new DataOutputStream(receivingBytes);
 			writeOutBytes.write(receivePacket.getData(), 4, receivePacket.getLength() - 4);
 			blockNum++;
-			System.out.println("Client received block number: " + blockNum);
+			verboseTrue("Client received block number: " + blockNum);
 			acknowledgeToHost(byteArrToInt(blockNumber));
 		}
 		return receivingBytes;
@@ -508,6 +509,15 @@ public class Client {
 		}
 		System.out.println("Finished read transfer.");
 		//System.exit(0);
+		
+	}
+	
+	public void verboseTrue (String displayText) {
+		if(verboseOrQuiet==0) {
+			System.out.println(displayText);
+		}else {
+			
+		}
 		
 	}
 
