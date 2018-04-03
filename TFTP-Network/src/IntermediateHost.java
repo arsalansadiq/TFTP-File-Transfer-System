@@ -24,6 +24,9 @@ public class IntermediateHost {
 	private int packetNum;// this will be the packet number to be used for the
 	// given error simulation
 	private int delayTime;
+	
+	private InetAddress inetAddressServer = null;
+	private InetAddress inetAddressClient = null;
 
 	public IntermediateHost() {
 
@@ -58,6 +61,7 @@ public class IntermediateHost {
 		// send request to server
 		System.out.println("Intermediate host: sending packet to server");
 		// sendReceiveSocket.send(sendReceivePacket);
+		sendReceivePacket.setAddress(inetAddressServer);
 		sim();
 
 		// waiting for response from server
@@ -70,6 +74,7 @@ public class IntermediateHost {
 		System.out.println("Intermediate host: sending packet to client");
 		sendReceivePacket.setPort(clientPort);
 		// sendReceiveSocket.send(sendReceivePacket);
+		sendReceivePacket.setAddress(inetAddressClient);
 		sim();
 
 		System.out.println("\nTRANSFER HAS BEGUN.................................");
@@ -81,6 +86,7 @@ public class IntermediateHost {
 						+ sendReceivePacket.getData()[1]);
 
 				sendReceivePacket.setPort(threadPort);
+				sendReceivePacket.setAddress(inetAddressServer);
 				sim();
 				System.out.println("Intermediate host: sending packet to thread");
 
@@ -171,6 +177,10 @@ public class IntermediateHost {
 		}
 		if(packetError) {//user wants to simulate a packet error either blockNum change, invalid mode, or invalid packet
 			//check if user wants to invalidate packet
+			DatagramPacket tempsendReceivePacket=null;
+			boolean fromClient=true;
+			if(!(sendReceivePacket.getAddress()==inetAddressClient))
+				fromClient=false;
 			if(invalidatePacket) {
 				//invalidate rrq or wrq... or data or acknowledge
 				if(((data[0]==0 && (data[1]==2 || data[1]==1))&& (packetNum<-1)) ||/* <-- invalidate rrq or wrq*/
@@ -178,7 +188,7 @@ public class IntermediateHost {
 					byte[] tempData=sendReceivePacket.getData();
 					tempData[1]=7;//this is an invalid opcode packet now invalid
 
-					sendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
+					tempsendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
 					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Invalidating Packet~~~~~~~~~~~~~~~~~~~~~~~~");
 
 					invalidatePacket=false;
@@ -196,7 +206,7 @@ public class IntermediateHost {
 							tempData[i]=1;
 					}
 					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Invalidating Mode~~~~~~~~~~~~~~~~~~~~~~~~");
-					sendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
+					tempsendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
 					invalidateMode=false;
 				}
 			}
@@ -214,7 +224,7 @@ public class IntermediateHost {
 					else
 						tempData[3]=2;
 			//		if()//coming from server
-					sendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
+					tempsendReceivePacket=new DatagramPacket(tempData, tempData.length,InetAddress.getLocalHost(), threadPort);
 			//		if()//co,ing from client
 					//	sendReceivePacket=new DatagramPacket(tempData, tempData.length, you're awesome, threadPort);
 					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Changing Block num~~~~~~~~~~~~~~~~~~~~~~~~");
@@ -222,7 +232,11 @@ public class IntermediateHost {
 					changeBlockNum=false;
 				}
 			}
-			sendReceiveSocket.send(sendReceivePacket);
+			if(fromClient)
+				tempsendReceivePacket.setAddress(inetAddressClient);
+			else
+				tempsendReceivePacket.setAddress(inetAddressServer);				
+			sendReceiveSocket.send(tempsendReceivePacket);
 		}
 		if (!duplicateSim && !delaySim && !lostSim && !TIDChange && !packetError) {
 			sendReceiveSocket.send(sendReceivePacket);
@@ -280,8 +294,12 @@ public class IntermediateHost {
 		}
 	}
 
-	private void operationSetup() {
+	private void operationSetup() throws UnknownHostException {
 		Scanner input = new Scanner(System.in);
+		
+		System.out.println("This computer address is: " + InetAddress.getLocalHost() + " Enter IP address of server:");
+		inetAddressServer = InetAddress.getByName(input.next());
+		inetAddressClient = InetAddress.getLocalHost();
 
 		System.out.println(
 				"Choose an operation. 0: normal operation, 1: lose a packet, 2: delay a packet, 3: duplicate a packet, 4: Illegal TFTP operation 5: Unknown TID");

@@ -25,11 +25,7 @@ public class ClientConnectionThread implements Runnable {
 	String fileNameToWrite;
 
 	public ClientConnectionThread(DatagramPacket receivePacket) {
-		try {
-			inetAddress = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+		inetAddress = receivePacket.getAddress();
 
 		try {
 			sendReceiveSocket = new DatagramSocket();
@@ -176,7 +172,7 @@ public class ClientConnectionThread implements Runnable {
 		do {
 
 			blockNum++;
-			
+
 			byte[] requestCode = { holdReceivingArray[0], holdReceivingArray[1] };
 			if (receivePacket.getPort() != 23) {// packet came from unkownID... discard packet, send off errorPacket
 				System.out.println("PACKET COMING FROM DIFFERENT HOST, SENDING ERROR PACKET BACK.....................");

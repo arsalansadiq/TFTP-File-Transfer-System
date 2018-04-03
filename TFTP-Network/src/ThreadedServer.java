@@ -38,15 +38,20 @@ public class ThreadedServer {
 				System.out.println("SERVER TIMED OUT......................");
 				System.exit(0);
 			}
+			boolean mode = false;
+			String str = getFileName(receivePacket);
+			String str2 = getFileName2(receivePacket);
+			if (str.equals("netascii") || str2.equals("octet"))
+				mode = true;
 
 			if (receive.equals(receiveOld)) {
 				System.out.println("Server: Duplicate read or write request received. Discarding...");
 			}else if(!(receivePacket.getData()[0]==0 && (receivePacket.getData()[1]==1 || receivePacket.getData()[1]==2))){ 
 				System.out.println("Invalid connection request recieved");
 				
-			}/*else if(!(getFileName(receivePacket).equals("netascii") || getFileName(receivePacket).equals("octet"))) {
+			}else if(!mode) {
 				System.out.println("Invalid mode recieved");
-			}*/
+			}
 			else {
 				Runnable newClient = new ClientConnectionThread(receivePacket);
 				new Thread(newClient).start();
@@ -60,13 +65,22 @@ public class ThreadedServer {
 	}
 	
 	private String getFileName(DatagramPacket fileNamePacket) {
-		int nameLength = 0;
-		for (int i = 2; fileNamePacket.getData()[i] != 0; i++) {
-			nameLength++;
-		}
+		int nameLengthend = (fileNamePacket.getLength()) - 1;
+		int nameLengthBegin = nameLengthend - 8;
+		
 
-		byte[] packetData = new byte[nameLength];
-		System.arraycopy(receivePacket.getData(), 2, packetData, 0, nameLength);
+		byte[] packetData = new byte[8];
+		System.arraycopy(receivePacket.getData(), nameLengthBegin, packetData, 0, 8);
+		return new String(packetData);
+	}
+	
+	private String getFileName2(DatagramPacket fileNamePacket) {
+		int nameLengthend = (fileNamePacket.getLength()) - 1;
+		int nameLengthBegin = nameLengthend - 5;
+		
+
+		byte[] packetData = new byte[5];
+		System.arraycopy(receivePacket.getData(), nameLengthBegin, packetData, 0, 5);
 		return new String(packetData);
 	}
 

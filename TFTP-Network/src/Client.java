@@ -56,22 +56,21 @@ public class Client {
 		System.out.println("0: Edit settings (normal vs. test, verbose vs. quiet, IP address of server, client/server directory) or 1: for Default");
 		def = input.nextInt();
 		if (def == 0) {
-
-			System.out.println("0: Normal, 1: Test");
-			normOrTest = input.nextInt();
-
-			System.out.println("0: Verbose, 1: Quiet");
-			verboseOrQuiet = input.nextInt();
-			
-
-			System.out.println("Enter IP address of server:");
-			IPAddress = input.next();
-
-			System.out.println("Enter client/server directory or type default:");
-			dir = input.next();
+		
+		System.out.println("0: Normal, 1: Test");
+		normOrTest = input.nextInt();
+		
+		System.out.println("0: Verbose, 1: Quiet");
+		verboseOrQuiet = input.nextInt();
+		
+		System.out.println("This computer address is: " + InetAddress.getLocalHost() + " Enter IP address of server:");
+		inetAddress = InetAddress.getByName(input.next());
+		
+		System.out.println("Enter client/server directory or type default:");
+		dir = input.next();
 		}
 
-		//input.close();
+		input.close();
 		filePathWrittenTo = Paths.get(currentPath + "\\Client", fileName);
 
 		if (readWriteOPCode == 2) {
@@ -526,11 +525,13 @@ public class Client {
 		
 		String input;
 		Client client = new Client();
-		do {
-			client.setup();
-			System.out.println("Would you like to initiate another file transfer? (Y)es or (N)o ");
-			 input = redoInput.nextLine();
-		}while(input.equalsIgnoreCase("Y"));
+		client.setup();
+		
+//		do {
+//			client.setup();
+//			System.out.println("Would you like to initiate another file transfer? (Y)es or (N)o ");
+//			 input = redoInput.nextLine();
+//		}while(input.equalsIgnoreCase("Y"));
 		System.out.println("Exiting....");
 		System.exit(0);
 		
