@@ -200,6 +200,7 @@ public class ClientConnectionThread implements Runnable {
 					e1.printStackTrace();
 				}
 				sendReceiveSocket.receive(receivePacket);
+				blockNum--;
 
 			}
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
