@@ -353,7 +353,7 @@ public class IntermediateHost {
 				}
 			}
 			if(!(invalidateMode)&&(packetTypeToInvalidate==2 || packetTypeToInvalidate==3)) {
-				System.out.println("Would you like to change a block number?\n 0:Yes 1:No");
+				System.out.println("Would you like to change the block number or opcode?\n 0: Block number 1: Opcode");
 				invalidateResponse=input.nextInt();
 				if(invalidateResponse==0) {
 					changeBlockNum=true;
@@ -362,7 +362,7 @@ public class IntermediateHost {
 				}
 			}
 			if(!invalidateMode && !changeBlockNum) {
-				System.out.println("The default operation is to make a packet invalid.");
+				System.out.println("The opcode will be changed.");
 				invalidatePacket=true;
 				if(!(packetTypeToInvalidate==0 ||packetTypeToInvalidate==1))
 					packetNum=-2;
