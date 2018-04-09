@@ -10,12 +10,12 @@
 ### Introduction:
 The goal of this iteration is to create multiple clients, an Intermediate Host, and a server to support steady-state file transfer. We designed and implemented a file transfer system based on the TFTP specification (RFC 1350). The system will consist of TFTP client(s) running on one computer, an intermediate Host, and a multithreaded TFTP server on separate computers.
 ****Updates in this version
- * Starting Version: Established Connections for File Transfer without Error Detection and Correction
- * Version 1.0: Implemented of File Transfer without Error Detection and Correction
- * Version 2.0: Added I/O Error Handling (ERROR Packets 1, 2, 3, 6)
- * Version 3.0: Added Network Error Handling (Timeout/Retransmission)
- * Version 4.0: Added TFTP Packet Format Errors (ERROR Packets 4, 5)
- * Version 5.0: Implemented of File Transfer between Different Computers
+ * **Starting Version: Established Connections for File Transfer without Error Detection and Correction**
+ * **Version 1.0: Implemented of File Transfer without Error Detection and Correction**
+ * **Version 2.0: Added I/O Error Handling (ERROR Packets 1, 2, 3, 6)**
+ * **Version 3.0: Added Network Error Handling (Timeout/Retransmission)**
+ * **Version 4.0: Added TFTP Packet Format Errors (ERROR Packets 4, 5)**
+ * **Version 5.0: Implemented of File Transfer between Different Computers**
 
 
 ### Included Files:
