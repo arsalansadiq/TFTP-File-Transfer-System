@@ -213,7 +213,7 @@ public class IntermediateHost {
 			//check if user wants to invalidate blockNum
 			else if(changeBlockNum) {
 				if((data[0]==0&&data[1]==3||data[0]==0 && data[1]==4)&&blockNumMatch(sendReceivePacket)){/*<-- invalidate data or ack*/ //if its a ack or data pack and blocknum matches then change blocknum
-					byte[] tempData=sendReceivePacket.getData();
+				/*	byte[] tempData=sendReceivePacket.getData();
 					System.out.println("Block num before change"+sendReceivePacket.getData()[3]+"tempdata[3]="+tempData[3]);
 					if(tempData[2]!=1)
 						tempData[2]=1;
@@ -227,9 +227,9 @@ public class IntermediateHost {
 					sendReceivePacket=new DatagramPacket(tempData, tempData.length,sendReceivePacket.getAddress(), sendReceivePacket.getPort());
 
 					//		if()//co,ing from client
-					//	sendReceivePacket=new DatagramPacket(tempData, tempData.length, you're awesome, threadPort);
+					//	sendReceivePacket=new DatagramPacket(tempData, tempData.length, you're awesome, threadPort);*/
 					System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~Changing Block num~~~~~~~~~~~~~~~~~~~~~~~~");
-					System.out.println("Block num after change"+sendReceivePacket.getData()[3]);
+					//System.out.println("Block num after change"+sendReceivePacket.getData()[3]);
 					changeBlockNum=false;
 				}
 			}

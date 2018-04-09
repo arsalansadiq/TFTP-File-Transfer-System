@@ -188,20 +188,20 @@ public class ClientConnectionThread implements Runnable {
 				sendReceiveSocket.receive(receivePacket);
 			}
 			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 3)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
-				
-				// neither an ack nor an error message therefore packet error 
-								System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
-								byte[] errorPacket = createErrorPacket(4,
-										"PACKET ERROR--EXPETING DATA code:03--BUT RECEIVED code:" + receivePacket.getData()[1]);
-								sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
-								try {
-									sendReceiveSocket.send(sendErrorPacket);
-								} catch (IOException e1) {
-									e1.printStackTrace();
-								}
-								sendReceiveSocket.receive(receivePacket);
 
-							}
+				// neither an ack nor an error message therefore packet error 
+				System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
+				byte[] errorPacket = createErrorPacket(4,
+						"PACKET ERROR--EXPETING DATA code:03--BUT RECEIVED code:" + receivePacket.getData()[1]);
+				sendErrorPacket = new DatagramPacket(errorPacket, errorPacket.length, inetAddress, hostPort);
+				try {
+					sendReceiveSocket.send(sendErrorPacket);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				sendReceiveSocket.receive(receivePacket);
+
+			}
 			if (requestCode[0] == 0 && requestCode[1] == 5) {
 				errorOccurred(receivePacket);
 				sendReceiveSocket.receive(receivePacket);
@@ -421,8 +421,8 @@ public class ClientConnectionThread implements Runnable {
 
 			}
 			if(!(receivePacket.getData()[0]==0 && receivePacket.getData()[1] == 4)&&!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5)){
-				
-// neither an ack nor an error message therefore packet error 
+
+				// neither an ack nor an error message therefore packet error 
 				System.out.println("PACKET ERROR, SEND ERROR PACKET, WAIT FOR RESPONSE FROM CLIENT.....................");
 				byte[] errorPacket = createErrorPacket(4,
 						"PACKET ERROR--EXPETING ACK code:04--BUT RECEIVED code:" + receivePacket.getData()[1]);
@@ -432,6 +432,7 @@ public class ClientConnectionThread implements Runnable {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+				blockNumber--;
 				sendReceiveSocket.receive(receivePacket);
 
 			}

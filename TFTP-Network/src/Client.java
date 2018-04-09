@@ -202,6 +202,7 @@ public class Client {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+				blockNumber--;
 				sendReceiveSocket.receive(receivePacket);// wait for proper packet
 			}
 			if (receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) {
