@@ -364,10 +364,10 @@ public class IntermediateHost {
 			if(!invalidateMode && !changeBlockNum) {
 				System.out.println("The opcode will be changed.");
 				invalidatePacket=true;
-				if(!(packetTypeToInvalidate==0 ||packetTypeToInvalidate==1))
+				if((packetTypeToInvalidate==0 ||packetTypeToInvalidate==1))
 					packetNum=-2;
 				else {
-					System.out.println("Which packet number would you like to make invalid");
+					System.out.println("Which data or ack number would you like to make invalid");
 					packetNum=input.nextInt();
 				}
 			}
